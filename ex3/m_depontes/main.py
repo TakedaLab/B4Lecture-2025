@@ -257,7 +257,7 @@ class LinearRegression:
         """
         self.data = read_csv(self.path)
 
-        self.w = self.OLS(self.M, self.data)
+        self.w = self.OLS()
 
     def predict(self) -> np.ndarray:
         """予測を行う関数.
@@ -325,9 +325,7 @@ class PCA:
         出力：
             S(np.ndarray): 変動行列, shape = (次元数, 次元数)
         """
-        S = 0
-        for i in range(len(X)):
-            S += np.outer((X[i] - means), (X[i] - means).T)
+        S = (X - means) @ (X - means).T
         return S
 
     def compute_sorted_eigen(
@@ -384,7 +382,7 @@ class PCA:
         入力：
             X(np.ndarray): 観測値ベクトルの集合, shape = (観測値ベクトルの数, 次元数)
         出力：
-            _(np.ndarray): 射影された特徴量ベクトル, shape = (観測値ベクトルの数, 次元数)
+            _(np.ndarray): 射影された特徴量ベクトル, shape = (観測値ベクトルの数, 主成分数)
         """
         return np.dot(self.A, X)
 
