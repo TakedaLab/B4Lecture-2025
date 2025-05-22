@@ -4,6 +4,30 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+def em_clustering(data, n_clusters):
+    """Perform GMM soft clustering by the EM algorithm.
+
+    Params:
+        data (ndarray): The data to cluster.
+        n_clusters (int): The number of desired clusters.
+    Returns:
+    """
+    # Turn 1-D data vector into matrix if needed
+    if len(data.shape) == 1:
+        data = data[:, np.newaxis]
+
+    # Initialize cluster parameters [mixture probability, mean, variance]
+    gmm = [
+        {
+            "p": 1.0 / n_clusters,
+            "mean": np.random.rand(data.shape[1]),
+            "cov": np.identity(data.shape[1]),
+        }
+        for _ in range(n_clusters)
+    ]
+    return gmm
+
+
 def main():
     """Execute main routine.
 
@@ -17,7 +41,7 @@ def main():
 
     # Scatterplots
 
-    # Data 1
+    # Data 1 (added violin plot for better visualisation of 1-D data)
     violin = plt.violinplot(
         data1, orientation="horizontal", showextrema=True, showmeans=True
     )["bodies"][0]
@@ -26,6 +50,23 @@ def main():
     plt.xlim(-3, 3)
     plt.title("Data 1 Scatterplot")
     plt.savefig("ex4/i_tzimas/data1_scatter.png")
+    plt.clf()
+
+    # Data 2
+    plt.scatter(data2[:, 0], data2[:, 1], s=15, c="#912583", zorder=2)
+    plt.title("Data 2 Scatterplot")
+    plt.grid()
+    plt.savefig("ex4/i_tzimas/data2_scatter.png")
+    plt.clf()
+
+    # Data 3
+    plt.scatter(data3[:, 0], data3[:, 1], s=15, c="#912583", zorder=2)
+    plt.title("Data 3 Scatterplot")
+    plt.grid()
+    plt.savefig("ex4/i_tzimas/data3_scatter.png")
+
+    # Clustering
+    # print(em_clustering(data1, 3))
 
 
 if __name__ == "__main__":
