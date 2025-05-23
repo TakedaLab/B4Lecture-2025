@@ -28,11 +28,42 @@ def em_clustering(data, n_clusters):
     return gmm
 
 
-def main():
-    """Execute main routine.
+def plot_scatter(data: np.ndarray, title: str, filename: str, mm=None) -> None:
+    """Create and save scatterplot as image file.
+
+    Can optionally take a mixture model as a parameter to plot on top of the data points.
 
     Params:
-    Returns:
+        data (ndarray): The input data to be plotted.
+        mm (): The optional mixture model to plot on top of the scatterplot.
+        title: The desired plot title.
+        filename: Path to the desired output file.
+    Returns: None
+    """
+    if len(data.shape) == 1:
+        # 1-D data (added violin plot for better visualisation)
+        violin = plt.violinplot(
+            data, orientation="horizontal", showextrema=True, showmeans=True
+        )["bodies"][0]
+        violin.set_facecolor("#bf5cb2")
+        plt.scatter(data, np.ones_like(data), c="#912583", zorder=2)
+        plt.xlim(-3, 3)
+        plt.title(title)
+        plt.savefig(filename)
+        plt.clf()
+    else:
+        plt.scatter(data[:, 0], data[:, 1], s=15, c="#912583", zorder=2)
+        plt.title(title)
+        plt.grid()
+        plt.savefig(filename)
+        plt.clf()
+
+
+def main() -> None:
+    """Execute main routine.
+
+    Params: None
+    Returns: None
     """
     # Data loading
     data1 = np.loadtxt("ex4/data1.csv", delimiter=",")
@@ -42,28 +73,19 @@ def main():
     # Scatterplots
 
     # Data 1 (added violin plot for better visualisation of 1-D data)
-    violin = plt.violinplot(
-        data1, orientation="horizontal", showextrema=True, showmeans=True
-    )["bodies"][0]
-    violin.set_facecolor("#bf5cb2")
-    plt.scatter(data1, np.ones_like(data1), c="#912583", zorder=2)
-    plt.xlim(-3, 3)
-    plt.title("Data 1 Scatterplot")
-    plt.savefig("ex4/i_tzimas/data1_scatter.png")
-    plt.clf()
+    plot_scatter(
+        data1, title="Data 1 Scatterplot", filename="ex4/i_tzimas/data1_scatter.png"
+    )
 
     # Data 2
-    plt.scatter(data2[:, 0], data2[:, 1], s=15, c="#912583", zorder=2)
-    plt.title("Data 2 Scatterplot")
-    plt.grid()
-    plt.savefig("ex4/i_tzimas/data2_scatter.png")
-    plt.clf()
+    plot_scatter(
+        data2, title="Data 2 Scatterplot", filename="ex4/i_tzimas/data2_scatter.png"
+    )
 
     # Data 3
-    plt.scatter(data3[:, 0], data3[:, 1], s=15, c="#912583", zorder=2)
-    plt.title("Data 3 Scatterplot")
-    plt.grid()
-    plt.savefig("ex4/i_tzimas/data3_scatter.png")
+    plot_scatter(
+        data3, title="Data 3 Scatterplot", filename="ex4/i_tzimas/data3_scatter.png"
+    )
 
     # Clustering
     # print(em_clustering(data1, 3))
