@@ -5,7 +5,7 @@ import numpy as np
 from scipy.stats import multivariate_normal
 
 
-def em_clustering(data, n_clusters, n_epochs=100):
+def em_clustering(data, n_clusters, n_epochs=100) -> tuple[list, np.ndarray]:
     """Perform GMM soft clustering by the EM algorithm.
 
     Params:
@@ -13,6 +13,9 @@ def em_clustering(data, n_clusters, n_epochs=100):
         n_clusters (int): The number of desired clusters.
         n_epochs (int): The number of iterations to run clustering for. Default is 100.
     Returns:
+        gmm, likelihoods (list, ndarray): The output GMM as a list of dictionaries, each
+        representing a cluster and the array of size n_epochs storing the log likelihood
+        of the model for each epoch.
     """
     # Turn 1-D data vector into matrix if needed
     if len(data.shape) == 1:
