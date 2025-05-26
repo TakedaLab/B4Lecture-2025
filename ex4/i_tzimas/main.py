@@ -2,19 +2,24 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats import multivariate_normal
 
 
-def em_clustering(data, n_clusters):
+def em_clustering(data, n_clusters, n_epochs=100):
     """Perform GMM soft clustering by the EM algorithm.
 
     Params:
         data (ndarray): The data to cluster.
         n_clusters (int): The number of desired clusters.
+        n_epochs (int): The number of iterations to run clustering for. Default is 100.
     Returns:
     """
     # Turn 1-D data vector into matrix if needed
     if len(data.shape) == 1:
         data = data[:, np.newaxis]
+
+    # Data sample size
+    data_len = data.shape[0]
 
     # Initialize cluster parameters [mixture probability, mean, variance]
     gmm = [
@@ -25,7 +30,40 @@ def em_clustering(data, n_clusters):
         }
         for _ in range(n_clusters)
     ]
-    return gmm
+
+    # Init log likelihood array
+    likelihoods = np.zeros(n_epochs)
+
+    # Init probability matrix used in fitting
+    x_probs = np.zeros((data_len, n_clusters))
+
+    # EM loop
+    for i in range(n_epochs):
+        # Expectation step
+
+        # Calculate probability of each data point to belong in each cluster
+        for j in range(n_clusters):
+            x_probs[:, j] = gmm[j]["p"] * multivariate_normal.pdf(
+                data, gmm[j]["mean"], gmm[j]["cov"]
+            )
+        x_probs_sums = np.sum(x_probs, 1)[:, np.newaxis]
+        x_probs /= x_probs_sums
+
+        # Maximization step
+        for j in range(n_clusters):
+            x_probs_j = x_probs[:, j][:, np.newaxis]
+            prob_sum = np.sum(x_probs[:, j])
+
+            mean_j = np.sum(x_probs_j * data, 0) / prob_sum
+
+            gmm[j]["p"] = prob_sum / data_len
+            gmm[j]["mean"] = mean_j
+            gmm[j]["cov"] = (x_probs_j * (data - mean_j)).T @ (data - mean_j) / prob_sum
+
+        # Log likelihood
+        likelihoods[i] = np.sum(np.log(x_probs_sums))
+
+    return gmm, likelihoods
 
 
 def plot_scatter(data: np.ndarray, title: str, filename: str, mm=None) -> None:
@@ -59,6 +97,11 @@ def plot_scatter(data: np.ndarray, title: str, filename: str, mm=None) -> None:
         plt.clf()
 
 
+def plot_likelihood(likelihoods, title, filename):
+    """ """
+    plt.plot(np.arange(1, len(likelihoods) + 1), likelihoods)
+
+
 def main() -> None:
     """Execute main routine.
 
@@ -88,7 +131,9 @@ def main() -> None:
     )
 
     # Clustering
-    # print(em_clustering(data1, 3))
+    gmm1, lh1 = em_clustering(data1, 3)
+    gmm2, lh2 = em_clustering(data2, 3)
+    gmm3, lh3 = em_clustering(data3, 2)
 
 
 if __name__ == "__main__":
