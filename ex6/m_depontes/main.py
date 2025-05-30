@@ -52,6 +52,8 @@ class HMM:
         self.accuracy = [0, 0]
         self.time = [0, 0]
 
+        self._load_pickle()
+
     def _load_pickle(self):
         """pickleファイルを読み取る関数.
 
@@ -103,6 +105,8 @@ class HMM:
                     )
             probability.append(np.sum(alpha[:, -1, :], axis=1))
 
+        return np.array(probability)
+
     def _viterbi_algorithm(self):
         """Viterbi Algorithmを実装する関数.
 
@@ -142,6 +146,8 @@ class HMM:
 
             p_hats.append(p_hat)
             q_hats.append(q_hat)
+
+        return np.array(p_hats), np.array(q_hats)
 
     def compare(self):
         """アルゴリズム比較を行う関数.
