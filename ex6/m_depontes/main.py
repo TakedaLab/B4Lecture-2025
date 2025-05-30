@@ -1,4 +1,4 @@
-"""HMMのアルゴリズム比較
+"""HMMのアルゴリズム比較.
 
 隠れマルコフモデルで出力された結果をもとに，forwardアルゴリズムおよび
 Viterbiアルゴリズムの精度を比較する.
@@ -63,7 +63,7 @@ class HMM:
             - self.A(np.array): 状態遷移行列 shape=(k, k, l)
             - self.B(np.array): 観測確率行列 shape=(k, l, n)
             - self.answer_models(np.array): 正解モデル shape=(p,)
-            - self.output(np.array): 観測された出力系列 shape=(p, T) 
+            - self.output(np.array): 観測された出力系列 shape=(p, T)
         """
         with open(self.file_path, "rb") as file:
             data = pickle.load(file)
@@ -75,9 +75,9 @@ class HMM:
         self.output = np.array(data["output"])
 
     def _forward_algorithm(self):
-        """Forward Algorithmを実装する関数
-        Forward Algorithmを用いて、観測された出力系列の確率を計算する。
+        """Forward Algorithmを実装する関数.
 
+        Forward Algorithmを用いて、観測された出力系列の確率を計算する。
         入力：
             - self.pi: 初期状態分布 shape=(k, l, 1)
             - self.A: 状態遷移行列 shape=(k, k, l)
@@ -98,15 +98,15 @@ class HMM:
             for t in range(1, T):
                 for j in range(s):
                     alpha[:, t, j] = (
-                        np.sum(alpha[:, t-1, :] * self.A[:, :, j], axis=1)
+                        np.sum(alpha[:, t - 1, :] * self.A[:, :, j], axis=1)
                         * self.B[:, j, output[t]]
                     )
             probability.append(np.sum(alpha[:, -1, :], axis=1))
 
     def _viterbi_algorithm(self):
-        """Viterbi Algorithmを実装する関数
-        Viterbi Algorithmを用いて、最も確率の高い隠れ状態系列を推定する。
+        """Viterbi Algorithmを実装する関数.
 
+        Viterbi Algorithmを用いて、最も確率の高い隠れ状態系列を推定する。
         入力：
             - self.pi: 初期状態分布 shape=(k, l, 1)
             - self.A: 状態遷移行列 shape=(k, k, l)
@@ -144,7 +144,7 @@ class HMM:
             q_hats.append(q_hat)
 
     def compare(self):
-        """アルゴリズム比較を行う関数
+        """アルゴリズム比較を行う関数.
 
         混合行列と精度を計算し，Forward AlgorithmとViterbi Algorithmの結果を比較する．
         入力：
@@ -154,7 +154,6 @@ class HMM:
             - self.accuracy: 精度 shape=(2,)
             - self.time: 実行時間 shape=(2,)
         """
-
         start_forward = time.time()
         forward_prob = self._forward_algorithm()
         end_forward = time.time()
@@ -177,11 +176,11 @@ class HMM:
             confusion_matrix_viterbi[true, pred_viterbi[i]] += 1
             confusion_matrix_forward[true, pred_forward[i]] += 1
 
-        accuracy_viterbi = (
-            np.trace(confusion_matrix_viterbi) / np.sum(confusion_matrix_viterbi)
+        accuracy_viterbi = np.trace(confusion_matrix_viterbi) / np.sum(
+            confusion_matrix_viterbi
         )
-        accuracy_forward = (
-            np.trace(confusion_matrix_forward) / np.sum(confusion_matrix_forward)
+        accuracy_forward = np.trace(confusion_matrix_forward) / np.sum(
+            confusion_matrix_forward
         )
 
         print("Confusion Matrix (Viterbi):\n", confusion_matrix_viterbi)
@@ -198,8 +197,8 @@ class HMM:
 
     def visualize(self):
         """混合行列を可視化する関数.
-        混合行列を可視化し，精度と実行時間を表示する．
 
+        混合行列を可視化し，精度と実行時間を表示する.
         入力：
             - self.confusion_matrix: 混合行列 shape=(2, k, k)
             - self.accuracy: 精度 shape=(2,)
@@ -207,7 +206,6 @@ class HMM:
         出力：
             - None
         """
-
         for confusion_matrix, accuracy, cost_time, title in zip(
             self.confusion_matrix,
             self.accuracy,
@@ -243,7 +241,7 @@ class HMM:
             plt.savefig(
                 f"{self.file_path.split('.')[0]}_{title}.png",
                 dpi=300,
-                bbox_inches='tight',
+                bbox_inches="tight",
             )
             plt.show()
 
