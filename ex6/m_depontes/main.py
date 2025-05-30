@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 
+
 class HMM:
     """HMMを利用したアルゴリズムの比較を行うクラス.
 
@@ -51,7 +52,6 @@ class HMM:
         self.accuracy = [0, 0]
         self.time = [0, 0]
 
-
     def _load_pickle(self):
         """pickleファイルを読み取る関数.
 
@@ -65,7 +65,7 @@ class HMM:
             - self.answer_models(np.array): 正解モデル shape=(p,)
             - self.output(np.array): 観測された出力系列 shape=(p, T) 
         """
-        with open(self.file_path, 'rb') as file:
+        with open(self.file_path, "rb") as file:
             data = pickle.load(file)
 
         self.pi = np.array(data["models"]["PI"])
@@ -75,9 +75,9 @@ class HMM:
         self.output = np.array(data["output"])
 
     def _forward_algorithm(self):
-        """ Forward Algorithmを実装する関数
+        """Forward Algorithmを実装する関数
         Forward Algorithmを用いて、観測された出力系列の確率を計算する。
-        
+
         入力：
             - self.pi: 初期状態分布 shape=(k, l, 1)
             - self.A: 状態遷移行列 shape=(k, k, l)
@@ -86,22 +86,25 @@ class HMM:
         出力：
             - probability: 観測された出力系列の確率 shape=(p, k)
         """
-        k, l, _ = self.B.shape
+        k, s, _ = self.B.shape
         _, T = self.output.shape
         probability = []
 
         for output in self.output:
-            alpha = np.zeros((k, T, l))
-            for i in range(l):
+            alpha = np.zeros((k, T, s))
+            for i in range(s):
                 alpha[:, 0, i] = self.pi[:, i, 0] * self.B[:, i, output[0]]
 
             for t in range(1, T):
-                for j in range(l):
-                    alpha[:, t, j] = np.sum(alpha[:, t-1, :] * self.A[:, :, j], axis=1) * self.B[:, j, output[t]]
+                for j in range(s):
+                    alpha[:, t, j] = (
+                        np.sum(alpha[:, t-1, :] * self.A[:, :, j], axis=1)
+                        * self.B[:, j, output[t]]
+                    )
             probability.append(np.sum(alpha[:, -1, :], axis=1))
 
     def _viterbi_algorithm(self):
-        """ Viterbi Algorithmを実装する関数
+        """Viterbi Algorithmを実装する関数
         Viterbi Algorithmを用いて、最も確率の高い隠れ状態系列を推定する。
 
         入力：
@@ -113,20 +116,20 @@ class HMM:
             - p_hat: 最も確率の高い隠れ状態系列の確率 shape=(p, k)
             - q_hat: 最も確率の高い隠れ状態系列 shape=(p, k, T)
         """
-        k, l, _ = self.B.shape
+        k, s, _ = self.B.shape
         _, T = self.output.shape
         p_hats = []
         q_hats = []
 
         for output in self.output:
-            delta = np.zeros((k, T, l))
-            psi = np.zeros((k, T, l), dtype=int)
-            for i in range(l):
+            delta = np.zeros((k, T, s))
+            psi = np.zeros((k, T, s), dtype=int)
+            for i in range(s):
                 delta[:, 0, i] = self.pi[:, i, 0] * self.B[:, i, output[0]]
 
             for t in range(1, T):
-                for j in range(l):
-                    temp = delta[:, t-1, :] * self.A[:, :, j]
+                for j in range(s):
+                    temp = delta[:, t - 1, :] * self.A[:, :, j]
                     delta[:, t, j] = np.max(temp, axis=1) * self.B[:, j, output[t]]
                     psi[:, t, j] = np.argmax(temp, axis=1)
 
@@ -134,8 +137,8 @@ class HMM:
             q_hat = np.zeros((k, T), dtype=int)
             q_hat[:, -1] = np.argmax(delta[:, -1, :], axis=1)
 
-            for t in range(T-2, -1, -1):
-                q_hat[:, t] = psi[np.arange(k), t+1, q_hat[:, t+1]]
+            for t in range(T - 2, -1, -1):
+                q_hat[:, t] = psi[np.arange(k), t + 1, q_hat[:, t + 1]]
 
             p_hats.append(p_hat)
             q_hats.append(q_hat)
@@ -164,7 +167,9 @@ class HMM:
         pred_forward = np.argmax(forward_prob, axis=1)
         pred_viterbi = np.argmax(viterbi_prob, axis=1)
 
-        confusion_matrix_viterbi = np.zeros((self.pi.shape[0], self.pi.shape[0]), dtype=int)
+        confusion_matrix_viterbi = np.zeros(
+            (self.pi.shape[0], self.pi.shape[0]), dtype=int
+        )
         confusion_matrix_forward = np.zeros_like(confusion_matrix_viterbi)
 
         for i in range(p):
@@ -172,8 +177,12 @@ class HMM:
             confusion_matrix_viterbi[true, pred_viterbi[i]] += 1
             confusion_matrix_forward[true, pred_forward[i]] += 1
 
-        accuracy_viterbi = np.trace(confusion_matrix_viterbi) / np.sum(confusion_matrix_viterbi)
-        accuracy_forward = np.trace(confusion_matrix_forward) / np.sum(confusion_matrix_forward)
+        accuracy_viterbi = (
+            np.trace(confusion_matrix_viterbi) / np.sum(confusion_matrix_viterbi)
+        )
+        accuracy_forward = (
+            np.trace(confusion_matrix_forward) / np.sum(confusion_matrix_forward)
+        )
 
         print("Confusion Matrix (Viterbi):\n", confusion_matrix_viterbi)
         print("Accuracy (Viterbi):", accuracy_viterbi)
@@ -190,7 +199,7 @@ class HMM:
     def visualize(self):
         """混合行列を可視化する関数.
         混合行列を可視化し，精度と実行時間を表示する．
-        
+
         入力：
             - self.confusion_matrix: 混合行列 shape=(2, k, k)
             - self.accuracy: 精度 shape=(2,)
@@ -207,22 +216,35 @@ class HMM:
         ):
             k = confusion_matrix.shape[0]
             fig, ax = plt.subplots(figsize=(4, 4))
-            ax.matshow(confusion_matrix, cmap='Blues')
+            ax.matshow(confusion_matrix, cmap="Blues")
             ax.set_xticks(np.arange(k))
             ax.set_yticks(np.arange(k))
             for (i, j), val in np.ndenumerate(confusion_matrix):
                 text_color = "white" if val > confusion_matrix.max() / 2 else "black"
                 ax.text(
-                    j, i, int(val), ha="center", va="center", color=text_color, fontsize=12
+                    j,
+                    i,
+                    int(val),
+                    ha="center",
+                    va="center",
+                    color=text_color,
+                    fontsize=12,
                 )
             ax.set_xticklabels([i + 1 for i in range(k)], fontsize=12)
             ax.set_yticklabels([i + 1 for i in range(k)], fontsize=12)
             ax.set_xlabel("Predicted model", fontsize=12)
             ax.xaxis.set_label_position("top")
             ax.set_ylabel("Actual model", fontsize=12)
-            ax.set_title(f"{title} Confusion Matrix\n(Acc. {accuracy * 100:.0f}%, Time. {cost_time:.3f}sec)", fontsize=12)
+            ax.set_title(
+                f"{title} Confusion Matrix\n(Acc. {accuracy * 100:.0f}%, Time. {cost_time:.3f}sec)",
+                fontsize=12,
+            )
             fig.tight_layout()
-            plt.savefig(f"{self.file_path.split('.')[0]}_{title}.png", dpi=300, bbox_inches='tight')
+            plt.savefig(
+                f"{self.file_path.split('.')[0]}_{title}.png",
+                dpi=300,
+                bbox_inches='tight',
+            )
             plt.show()
 
 
@@ -239,10 +261,11 @@ def parse_args():
         "--file_path",
         type=str,
         required=True,
-        help="Path to the pickle file containing HMM data"
+        help="Path to the pickle file containing HMM data",
     )
 
     return parser.parse_args()
+
 
 if __name__ == "__main__":
     args = parse_args()
