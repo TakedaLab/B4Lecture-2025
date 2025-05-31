@@ -192,7 +192,7 @@ if __name__ == "__main__":
         for filename in sys.argv[1:]:
             try:
                 data = pickle.load(open(filename, "rb"))
-                dataset[filename.split("\\")[-1].split(".")[0]] = (
+                dataset[os.path.basename(filename).split(".")[0]] = (
                     data  # .pickle以前をkeyに
                 )
             except FileNotFoundError:
