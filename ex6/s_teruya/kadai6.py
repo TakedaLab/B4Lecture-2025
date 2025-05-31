@@ -161,7 +161,7 @@ class HMM:
             ax = fig.add_subplot(1, len(pred_dict), n)  # 左から順に
             # 混同行列表示
             cm = confusion_matrix(self.answer_models, pred)
-            seaborn.heatmap(cm, ax=ax, annot=True, cbar=False)
+            seaborn.heatmap(cm, ax=ax, annot=True, cbar=False, cmap="Blues")
             # 行列周りの表示
             ax.set_xlabel("Predict model")
             ax.set_ylabel("Actual model")
