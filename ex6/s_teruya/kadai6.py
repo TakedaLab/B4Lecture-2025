@@ -3,9 +3,9 @@
 
 """kadai6.py.
 
--
+- Forwardアルゴリズム/Viterbiアルゴリズムによるモデル予測
 - 実行コマンド
- `$ python kadai6.py`
+ `$ python kadai6.py` または `$ python kadai6.py (pickleファイル名) ...`
 
 """
 
