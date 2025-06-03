@@ -1,5 +1,0 @@
-# WHAT
-
-# RESULT
-
-# WIP
