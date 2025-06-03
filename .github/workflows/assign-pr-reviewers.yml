@@ -57,12 +57,13 @@ jobs:
             assignment
             auto-pr
           reviewers: |
-            chomeyama
-            tkmyamamoto
+            KateSawada
+            ryota-skating
+            ky116
           body: |
             users.csv を更新しました．
-            
+
             ${{ inputs.lecture }}のレビュアーを割り当てました．
             ${{ env.NEW_ASSIGN }}
-            
+
             このPRをマージ後，この割り当てに基づいて自動でレビュアーが指定されます．

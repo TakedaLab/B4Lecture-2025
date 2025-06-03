@@ -1,3 +1,4 @@
-free-spoken-digit-dataset
-keras_model
-result.csv
+venv
+data
+logs
+outputs

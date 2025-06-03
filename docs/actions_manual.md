@@ -26,9 +26,9 @@
 
 - 以下の箇所を変更する
 
-https://github.com/TakedaLab/B4Lecture-2023/blob/55133c513fc977fabb3903e89409906a8ed99e7f/.github/workflows/assign-pr-reviewers.yml#L59-L61
+https://github.com/TakedaLab/B4Lecture-2024/blob/c092f1f41b8ed611fbc78960e14b4f79a77a60cb/.github/workflows/assign-pr-reviewers.yml#L59
 
-https://github.com/TakedaLab/B4Lecture-2023/blob/55133c513fc977fabb3903e89409906a8ed99e7f/.github/workflows/first_message.yml#L24
+https://github.com/TakedaLab/B4Lecture-2024/blob/c092f1f41b8ed611fbc78960e14b4f79a77a60cb/.github/workflows/first_message.yml#L27
 
 - ドキュメントの各リンクが有効か確認する．
 - [users.csvの更新](#初回の課題の前に行うこと)

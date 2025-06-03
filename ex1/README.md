@@ -19,8 +19,7 @@
 3. 発表（次週）
    - 取り組んだ内容を周りにわかるように説明
    - コードの説明はGithubのページをそのまま使ってもいいよ
-   - 発表者は当日にランダムに決めるので**スライドは全員準備**
-4. スライドを`Procyon/発表資料/B4輪講/2023`にアップロード
+4. スライドをBehaviour Signal Prosessing LabのTeamsの `B4Lecture/Presentation files/YYYMMDD/`にアップロード
 ## 結果例
 
 ![結果例](figs/result.png)

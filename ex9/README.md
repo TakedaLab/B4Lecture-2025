@@ -4,202 +4,55 @@
 
 ## 課題の概要
 
-本課題では，B4輪講のまとめとしてパターン認識を行う．
+本課題では，Diffusion modelを画像データセットを用いて学習する．
 
 
 
 ## 課題
 
-1. 単一数字発話を認識してみよう！
-2. プレゼンを準備をしよう！
+1. 画像を生成してみよう！
+  - 学習コードを完成させる
+    - main.py内の `# TODO` 部分を穴埋めしよう
+    - main_example.pyが解答例
+  - 学習を行う
+  - 生成し，結果をプロット
+    - Diffusion processをアニメーションにできるとベター
+2. いろいろいじってみよう！（どれだけやるかは任意）
+  - ノイズ推定モデルを変更する
+  - 別のデータセットを使用する
+  - ノイズスケジューリングを変える
+  - 学習時/推論時のタイムステップを変える
+  - etc...
 
 
-## Free Spoken Digit Database (FSDD)
-
-- 単一数字（0～9）発話データセット
-  - 話者数：4, 発話数：各50
-  - 学習：1800サンプル，テスト：200サンプル
-    - 秘密のシードによりテストセットを作成しており、テストデータの答えは隠してあります (音声聴けばわかりますが・・)
-  - 発話区間を切り出すスクリプトあり
-
-
-## 課題管理者の準備 (B4のみなさんはスキップしてください)
+## 準備
+1. [INSTALLING PREVIOUS VERSIONS OF PYTORCH](https://pytorch.org/get-started/previous-versions/) を参考に、実行環境でのCUDAバージョンに合致した torch, torchvision をインストール
+2. その他パッケージをインストール
 
 ```sh
-./setup.sh admin
-python make_label.py --seed {秘密のシード}
+pip install -r requirements.txt
 ```
 
+## 実行
 
-## 課題の進め方
+```sh
+python main.py datadir=<データダウンロード先の絶対パス>
+```
+もしくは `conf/default.yaml` の１行目を
+```yaml
+datadir: <データダウンロード先の絶対パス>
+```
+に書き換えたうえで
+```sh
+python main.py
+```
+## 結果の例
 
-以下はPython3.8.0で動作を確認しています。
+![Result](figs/result.png)
 
-1. 実行環境のセットアップ
+## 参考資料
 
-    ```sh
-    $ ./setup.sh
-    ```
+[Diffusers (別のノイズ推定モデルを使いたい場合)](https://huggingface.co/docs/diffusers/api/models/overview)
 
-2. 自由に予測モデルを作りましょう
+[Hydra（ハイパーパラメータの設定）](https://hydra.cc/docs/intro/)
 
-   - B4輪講で学んだことなど自由な発想で予測モデルを作ってみましょう
-     - 特徴量： MFCC, PCAなど
-     - 識別器：GMM, HMM, MLPなど
-     - k-meansクラスタリングなど教師なし学習
-   - 外部ライブラリの使用可
-     - 思いついたことはどんどん試してみてください
-
-3. テストデータに対して推論を行い結果を計算しましょう
-
-   - テストデータに対する最終的な結果を事前に配布するので、それを使って5回推論を行い、正解率の平均値を計算してください
-   - 平均値の計算だけでなく、信頼区間をプロットするなどの工夫をするとより良いです
-
-
-## ベースラインの実行
-### keras / tensorflowの場合
-
-  - kerasのバックエンドをtensorflowに変更
-
-    ```sh
-    $ vim ~/.keras/keras.json
-    ```
-
-
-
-    変更前
-
-    ```json
-    {
-        "image_dim_ordering": "th",
-        "backend": "theano",
-        "epsilon": 1e-07,
-        "floatx": "float32"
-    }
-    ```
-
-
-
-    変更後
-
-    ```json
-    {
-        "image_dim_ordering": "tf",
-        "backend": "tensorflow",
-        "epsilon": 1e-07,
-        "floatx": "float32"
-    }
-    ```
-
-  - ベースラインの実行
-
-
-    ```sh
-    $ python baseline.py
-    ```
-
-    乱数によってうまく学習できないことがあるので何度か試してみてください
-
-### pytorch_lightningの場合
-- ディレクトリ移動
-
-    ```sh
-    $ cd pytorch_lightning/
-    ```
-
-- 適当な仮想環境下で必要モジュールを準備
-    ```sh
-    $ pip install -r requirement.txt
-    ```
-
-- ベースラインの実行
-    ```sh
-    $ python baseline.py
-    ```
-
-- 詳しくは `pytorch_lightning/README.md` を参照
-
-**注意**
-
-​	インストールされるtensorflowはcpu版です．
-
-​	gpuを使いたい場合はcpu版を一度アンインストールし，
-
-​	gpu版をインストールするのを推奨します．
-
-​	またサーバでgpuを使うときはslurmでジョブを管理するなど注意が必要です．
-
-​	詳しくは[サーバマニュアル](https://github.com/TakedaLab/ServerManual#slurm%E3%81%AE%E7%89%B9%E5%BE%B4)を参照するか先輩に聞いてください．
-
-
-
-## 結果例（ベースライン）
-
-![result](./figs/result.png)
-
-## ヒント・注意点
-
-- テストデータは最後に推論に使うだけにする（学習はもちろん、ハイパーパラメータの決定にも使わない）
-  - モデルを色々試行錯誤するときは、学習セットからバリデーションセットを切り出しておき、それで計算した指標をもとに学習したりハイパーパラメータを決定したりする
-- 音声は時系列データ
-  - 系列長が一定ではない
-- 重要なのはデータの理解
-  - Deepにすればいいというものではない
-  - 前処理やデータの特徴を把握することが大事
-- データ数が少ない
-  - 外部データの利用は禁止
-  - データをいじって疑似的に学習データを増やすのはOK
-- baseline.pyを参考にしつつ自分だけの最強認識モデルを作成しよう！
-
-
-
-## 課題発表会について
-
-- **全員発表**
-  - 評価基準：5回推論を行った正解率（Accuracy）の平均値
-  - 用いた特徴量，識別器について簡単に説明
-    - どういった意図で使用したか説明できると◎
-  - 考察
-
-
-## 余裕がある人は
-
-- 出来る限り可読性，高速化を意識しましょう
-
-  - 冗長な記述はしていませんか
-  - for文は行列演算に置き換えることはできませんか
-
-- 関数は一般化しましょう
-
-  - 課題で与えられたデータ以外でも動作するようにしましょう
-  - N次元の入力にも対応できますか
-
-- 処理時間を意識しましょう
-
-  - どれだけ高速化できたか，`scipy`の実装にどれだけ近づけたか
-  - pythonで実行時間を測定する方法は[こちら](http://st-hakky.hatenablog.com/entry/2018/01/26/214255)
-
-  ​
-
-## 注意
-
-- 武田研究室の場合はセットアップで作成した`virtualenv`環境を利用すること  
-
-  - アクティベート例：`source ~/workspace3/myvenv/bin/activate`  
-  - アクティベート後`pip install ...`でライブラリのインストールを行う  
-
-- 自分の作業ブランチで課題を行うこと
-
-- プルリクエストを送る前に[REVIEW.md](https://github.com/TakedaLab/B4Lecture/blob/master/REVIEW.md)を参照し直せるところは直すこと
-
-- プルリクエストをおくる際には**実行結果の画像も載せること**
-
-- 作業前にリポジトリを最新版に更新すること
-
-  ```
-  $ git checkout master
-  $ git fetch upstream
-  $ git merge upstresam/master
-  ```
-
-  ​
