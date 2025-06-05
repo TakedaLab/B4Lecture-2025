@@ -22,7 +22,6 @@ from keras.layers.core import Dense, Dropout, Activation
 from keras.models import Sequential
 from keras.optimizers import SGD
 from keras.utils import np_utils
-from pathlib import Path
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
