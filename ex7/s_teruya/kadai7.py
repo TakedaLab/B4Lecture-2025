@@ -22,6 +22,7 @@ from keras.layers.core import Dense, Dropout, Activation
 from keras.models import Sequential
 from keras.optimizers import SGD
 from keras.utils import np_utils
+from pathlib import Path
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
@@ -66,7 +67,7 @@ def feature_extraction(path_list):
         features: 特徴量
     """
 
-    load_data = (lambda path: librosa.load(path)[0])
+    load_data = (lambda path: librosa.load(f"../{path}")[0])
 
     data = list(map(load_data, path_list))
     features = np.array([np.mean(librosa.feature.mfcc(y=y, n_mfcc=13), axis=1) for y in data])
@@ -120,8 +121,8 @@ def main():
     args = parser.parse_args()
 
     # データの読み込み
-    training = pd.read_csv("training.csv")
-    test = pd.read_csv("test.csv")
+    training = pd.read_csv("../training.csv")
+    test = pd.read_csv("../test.csv")
 
     # 学習データの特徴抽出
     X_train = feature_extraction(training["path"].values)
