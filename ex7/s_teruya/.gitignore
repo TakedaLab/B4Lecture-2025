@@ -1,3 +1,3 @@
-../bootstrap.sh
 .venv/
+bootstrap.sh
 venv_usage.txt 
