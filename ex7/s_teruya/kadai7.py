@@ -129,8 +129,10 @@ def main():
     time_start=time.time()
 
     # 学習データの特徴抽出
+    print("feature_extracting")
     X_train = feature_extraction(training["path"].values)
     X_test = feature_extraction(test["path"].values)
+    print("complete feature_extraction")
 
     # 正解ラベルをone-hotベクトルに変換 ex. 3 -> [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
     Y_train = np_utils.to_categorical(y=training["label"], num_classes=10)
@@ -143,6 +145,7 @@ def main():
     )
 
     # モデルの構築
+    print("creating model")
     model = my_MLP(input_shape=X_train.shape[1], output_dim=10)
 
     # モデルの学習基準の設定
@@ -151,6 +154,7 @@ def main():
                   metrics=["accuracy"])
 
     # モデルの学習
+    print("fitting data")
     model.fit(X_train,
               Y_train,
               batch_size=32,
@@ -166,12 +170,13 @@ def main():
     print("Validation accuracy: ", score[1])
 
     # 予測結果
+    print("predicting")
     predict = model.predict(X_test)
     predicted_values = np.argmax(predict, axis=1)
 
     # 実行時間計測
     time_end=time.time()
-    print(f"Pattern Recognition finished in {time_end-time_start}")
+    print(f"Pattern Recognition finished in {time_end-time_start:.5g}")
 
     # テストデータに対して推論した結果の保存
     write_result(test["path"].values, predicted_values)
