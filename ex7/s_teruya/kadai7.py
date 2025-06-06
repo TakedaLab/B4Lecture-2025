@@ -95,6 +95,10 @@ def plot_confusion_matrix(predict, ground_truth, title=None, cmap=plt.cm.Blues):
     plt.tight_layout()
     plt.ylabel("Predicted")
     plt.xlabel("Ground truth")
+    try:
+        plt.savefig("picture/result.png")
+    except Exception:
+        pass
     plt.show()
 
 
@@ -132,7 +136,10 @@ def main():
     print("feature_extracting")
     X_train = feature_extraction(training["path"].values)
     X_test = feature_extraction(test["path"].values)
-    print("complete feature_extraction")
+
+    # 実行時間計測
+    time_end=time.time()
+    print(f"complete feature_extraction in {time_end-time_start:.5g}")
 
     # 正解ラベルをone-hotベクトルに変換 ex. 3 -> [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
     Y_train = np_utils.to_categorical(y=training["label"], num_classes=10)
