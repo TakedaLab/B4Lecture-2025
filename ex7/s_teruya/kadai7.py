@@ -49,10 +49,6 @@ def my_MLP(input_shape, output_dim):
     model.add(Activation("relu"))
     model.add(Dropout(0.2))
 
-    model.add(Dense(256))
-    model.add(Activation("relu"))
-    model.add(Dropout(0.2))
-
     model.add(Dense(output_dim))
     model.add(Activation("softmax"))
 
