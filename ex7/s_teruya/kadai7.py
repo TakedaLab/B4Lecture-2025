@@ -13,6 +13,7 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import time
 
 import librosa
 import matplotlib.pyplot as plt
@@ -122,6 +123,10 @@ def main():
     # データの読み込み
     training = pd.read_csv("../training.csv")
     test = pd.read_csv("../test.csv")
+    print("Successfully reading csv")
+
+    # 実行時間計測
+    time_start=time.time()
 
     # 学習データの特徴抽出
     X_train = feature_extraction(training["path"].values)
@@ -163,6 +168,10 @@ def main():
     # 予測結果
     predict = model.predict(X_test)
     predicted_values = np.argmax(predict, axis=1)
+
+    # 実行時間計測
+    time_end=time.time()
+    print(f"Pattern Recognition finished in {time_end-time_start}")
 
     # テストデータに対して推論した結果の保存
     write_result(test["path"].values, predicted_values)
