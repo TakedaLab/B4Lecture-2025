@@ -13,6 +13,7 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import os
 import time
 
 import librosa
@@ -39,6 +40,10 @@ def my_MLP(input_shape, output_dim):
     """
 
     model = Sequential()
+
+    model.add(Dense(256, input_dim=input_shape))
+    model.add(Activation("relu"))
+    model.add(Dropout(0.2))
 
     model.add(Dense(256, input_dim=input_shape))
     model.add(Activation("relu"))
@@ -123,6 +128,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--path_to_truth", type=str, help='テストデータの正解ファイルCSVのパス')
     args = parser.parse_args()
+    if not os.path.exists(args.path_to_truth):
+        print("Warning: --path_to_truth filename may be wrong")
 
     # データの読み込み
     training = pd.read_csv("../training.csv")

@@ -1,4 +1,5 @@
 .venv
 資料/
 bootstrap.sh
+test_truth.csv
 venv_usage.txt
