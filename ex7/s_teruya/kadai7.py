@@ -221,7 +221,15 @@ def main():
     parser.add_argument(
         "--path_to_truth", type=str, help="テストデータの正解ファイルCSVのパス"
     )
+    parser.add_argument(
+        "-r",
+        "--repeat",
+        type=int,
+        default=1,
+        help="繰り返し数(指定すると保存されません)",
+    )
     args = parser.parse_args()
+    repeat = int(args.repeat)
     if not os.path.exists(args.path_to_truth):
         print("Warning: --path_to_truth filename may be wrong")
 
@@ -234,69 +242,90 @@ def main():
     time_start = time.time()
 
     # 学習データの特徴抽出
-    X_train, pca, t_train = feature_extraction(
+    X_trainset, pca, t_train = feature_extraction(
         training["path"].values, cache_file="train_audio.pkl"
     )
     X_test, _, t_test = feature_extraction(
         test["path"].values, pca=pca, cache_file="test_audio.pkl"
     )
     print(
-        f"complete feature_extraction in {t_train + t_test:.5g}, number of features is {X_train.shape[1]}"
+        f"complete feature_extraction in {t_train + t_test:.5g}, number of features is {X_trainset.shape[1]}"
     )
 
     # 正解ラベルをone-hotベクトルに変換 ex. 3 -> [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
-    Y_train = np_utils.to_categorical(y=training["label"], num_classes=10)
+    Y_trainset = np_utils.to_categorical(y=training["label"], num_classes=10)
 
-    # 学習データを学習データとバリデーションデータに分割 (バリデーションセットを20%とした例)
-    X_train, X_validation, Y_train, Y_validation = train_test_split(
-        X_train,
-        Y_train,
-        test_size=0.2,
-        random_state=20200616,
-    )
-
-    # モデルの構築
-    print("creating model")
-    model = my_MLP(input_shape=X_train.shape[1], output_dim=10)
-
-    # モデルの学習基準の設定
-    model.compile(
-        loss="categorical_crossentropy", optimizer=SGD(lr=0.002), metrics=["accuracy"]
-    )
-
-    # モデルの学習
-    print("fitting data")
-    model.fit(X_train, Y_train, batch_size=32, epochs=100, verbose=1)
-
-    # モデル構成，学習した重みの保存
-    model.save("keras_model/my_model.h5")
-
-    # バリデーションセットによるモデルの評価
-    # モデルをいろいろ試すときはテストデータを使ってしまうとリークになる可能性があるため、このバリデーションセットによる指標を用いてください
-    score = model.evaluate(X_validation, Y_validation, verbose=0)
-    print("Validation accuracy: ", score[1])
-
-    # 予測結果
-    print("predicting")
-    predict = model.predict(X_test)
-    predicted_values = np.argmax(predict, axis=1)
-
-    # 実行時間計測
-    time_end = time.time()
-    print(f"Pattern Recognition finished in {time_end - time_start:.5g}")
-
-    # テストデータに対して推論した結果の保存
-    write_result(test["path"].values, predicted_values)
-
-    # テストデータに対する正解ファイルが指定されていれば評価を行う（accuracyと混同行列）
-    if args.path_to_truth:
-        test_truth = pd.read_csv(args.path_to_truth)
-        truth_values = test_truth["label"].values
-        ac_score = accuracy_score(truth_values, predicted_values)
-        print("Test accuracy: ", ac_score)
-        plot_confusion_matrix(
-            predicted_values, truth_values, title=f"(Accuracy:{ac_score})"
+    score_list = []
+    for i in range(repeat):
+        # 学習データを学習データとバリデーションデータに分割 (バリデーションセットを20%とした例)
+        X_train, X_validation, Y_train, Y_validation = train_test_split(
+            X_trainset,
+            Y_trainset,
+            test_size=0.2,
+            random_state=20200616 if repeat < 2 else None,
         )
+
+        # モデルの構築
+        print("creating model")
+        model = my_MLP(input_shape=X_train.shape[1], output_dim=10)
+
+        # モデルの学習基準の設定
+        model.compile(
+            loss="categorical_crossentropy",
+            optimizer=SGD(lr=0.002),
+            metrics=["accuracy"],
+        )
+
+        # モデルの学習
+        print("fitting data")
+        model.fit(
+            X_train,
+            Y_train,
+            batch_size=32,
+            epochs=100,
+            verbose=1 if repeat < 2 else 0,
+        )
+
+        # モデル構成，学習した重みの保存
+        if repeat < 2:
+            model.save("keras_model/my_model.h5")
+
+        # バリデーションセットによるモデルの評価
+        # モデルをいろいろ試すときはテストデータを使ってしまうとリークになる可能性があるため、このバリデーションセットによる指標を用いてください
+        score = model.evaluate(X_validation, Y_validation, verbose=0)
+        print("Validation accuracy: ", score[1])
+
+        # 予測結果
+        print("predicting")
+        predict = model.predict(X_test)
+        predicted_values = np.argmax(predict, axis=1)
+
+        # 実行時間計測
+        if repeat < 2:
+            time_end = time.time()
+            print(f"Pattern Recognition finished in {time_end - time_start:.5g}")
+
+        # テストデータに対して推論した結果の保存
+        if repeat < 2:
+            write_result(test["path"].values, predicted_values)
+
+        # テストデータに対する正解ファイルが指定されていれば評価を行う（accuracyと混同行列）
+        if args.path_to_truth:
+            test_truth = pd.read_csv(args.path_to_truth)
+            truth_values = test_truth["label"].values
+            ac_score = accuracy_score(truth_values, predicted_values)
+            print("Test accuracy: ", ac_score)
+            if repeat < 2:
+                plot_confusion_matrix(
+                    predicted_values, truth_values, title=f"(Accuracy:{ac_score})"
+                )
+            else:
+                score_list.append(ac_score)
+    if repeat >= 2:
+        time_end = time.time()
+        print(f"Pattern Recognition finished in {time_end - time_start:.5g}")
+        print(f"average accuracy: {np.mean(score_list)}")
+        print(f"standard deviation: {np.std(score_list)}")
 
 
 if __name__ == "__main__":
