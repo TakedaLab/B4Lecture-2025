@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# https://qiita.com/yutalfa/items/dbd172138db60d461a56
+# https://qiita.com/koshian2/items/ca99b4a489d164e9cec6
+# https://zenn.dev/kthrlab_blog/articles/4e69b7d87a2538
 
 """
 B4輪講最終課題 パターン認識に挑戦してみよう
@@ -20,6 +23,7 @@ import librosa
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pickle
 from keras.layers.core import Dense, Dropout, Activation
 from keras.models import Sequential
 from keras.optimizers import SGD
@@ -58,7 +62,7 @@ def my_MLP(input_shape, output_dim):
     return model
 
 
-def feature_extraction(path_list):
+def feature_extraction(path_list, cache_file="cached_audio.pkl"):
     """
     wavファイルのリストから特徴抽出を行い，リストで返す
     扱う特徴量はMFCC13次元の平均（0次は含めない）
@@ -68,12 +72,64 @@ def feature_extraction(path_list):
         features: 特徴量
     """
 
-    load_data = (lambda path: librosa.load(f"../{path}")[0])
+    
+    mtime={p: os.path.getmtime(f"../{p}") for p in path_list}
+    print("loading data...")
+    try:    # データに変更がなければキャッシュから読み込み
+        with open(cache_file, "rb") as f:
+            dict_pd=pickle.load(f)
+        if list(dict_pd["path"])==list(path_list) and dict_pd["mtime"] == mtime:
+            data = dict_pd["data"]
+        else:
+            raise ValueError("Cache invalid due to csv file update.")
+    except Exception:
+        load_data = (lambda path: librosa.load(f"../{path}")[0])
+        data = list(map(load_data, path_list))
+        # キャッシュ保存
+        dict_pd={"path":path_list,"mtime":mtime,"data":data}
+        with open(cache_file, "wb") as f:
+            pickle.dump(dict_pd, f)
 
-    data = list(map(load_data, path_list))
-    features = np.array([np.mean(librosa.feature.mfcc(y=y, n_mfcc=13), axis=1) for y in data])
+    print("extracting...")
+    start=time.time()   # 実行時間計測
+    mfccs = np.array([np.mean(librosa.feature.mfcc(y=y, n_mfcc=25)[1:], axis=1) for y in data]) # MFCC
+    dmfccs = np.array([np.mean(librosa.feature.delta(librosa.feature.mfcc(y=y, n_mfcc=25), width=5)[1:], axis=1) for y in data])    #ΔMFCC
+    ddmfccs = np.array([np.mean(librosa.feature.delta(librosa.feature.mfcc(y=y, n_mfcc=25), order=2, width=5)[1:], axis=1) for y in data])  #ΔΔMFCC
+    mel_dbs = np.array([np.mean(librosa.power_to_db(librosa.feature.melspectrogram(y=y,n_mels=24)), axis=1) for y in data]) # メル
+    zcr_info = np.array([
+        [
+            np.mean(zcr := librosa.feature.zero_crossing_rate(y=y)),
+            np.std(zcr),
+            np.min(zcr),
+            np.max(zcr),
+            np.median(zcr)
+        ]
+        for y in data
+    ])  # ZCR
+    # rms_info = np.array([
+    #     [
+    #         np.mean(rms := librosa.feature.rmse(y=y)),
+    #         np.std(rms),
+    #         np.min(rms),
+    #         np.max(rms),
+    #         np.median(rms)
+    #     ]
+    #     for y in data
+    # ])  # RMS
+    drms_info = np.array([
+        [
+            np.mean(drms := librosa.feature.delta(librosa.feature.rmse(y=y), width=5)),
+            np.std(drms),
+            np.min(drms),
+            np.max(drms),
+            np.median(drms)
+        ]
+        for y in data
+    ])  # ΔRMS
+    features = np.hstack([mfccs,dmfccs,ddmfccs,mel_dbs,zcr_info,drms_info])  # ,rms_info
+    end=time.time() # 実行時間計測
 
-    return features
+    return features, end-start
 
 
 def plot_confusion_matrix(predict, ground_truth, title=None, cmap=plt.cm.Blues):
@@ -91,6 +147,13 @@ def plot_confusion_matrix(predict, ground_truth, title=None, cmap=plt.cm.Blues):
     cm = confusion_matrix(predict, ground_truth)
     plt.figure()
     plt.imshow(cm, interpolation="nearest", cmap=cmap)
+    thresh = cm.max() / 2
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            plt.text(j, i, format(cm[i, j], 'd'),
+                     ha="center", va="center",
+                     color="white" if cm[i, j] > thresh else "black")
+    
     plt.title(title)
     plt.colorbar()
     plt.tight_layout()
@@ -136,13 +199,9 @@ def main():
     time_start=time.time()
 
     # 学習データの特徴抽出
-    print("feature_extracting")
-    X_train = feature_extraction(training["path"].values)
-    X_test = feature_extraction(test["path"].values)
-
-    # 実行時間計測
-    time_end=time.time()
-    print(f"complete feature_extraction in {time_end-time_start:.5g}")
+    X_train, t_train = feature_extraction(training["path"].values, cache_file="train_audio.pkl")
+    X_test, t_test = feature_extraction(test["path"].values, cache_file="test_audio.pkl")
+    print(f"complete feature_extraction in {t_train+t_test:.5g}")
 
     # 正解ラベルをone-hotベクトルに変換 ex. 3 -> [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
     Y_train = np_utils.to_categorical(y=training["label"], num_classes=10)
@@ -195,8 +254,9 @@ def main():
     if args.path_to_truth:
         test_truth = pd.read_csv(args.path_to_truth)
         truth_values = test_truth['label'].values
-        plot_confusion_matrix(predicted_values, truth_values)
-        print("Test accuracy: ", accuracy_score(truth_values, predicted_values))
+        ac_score=accuracy_score(truth_values, predicted_values)
+        print("Test accuracy: ", ac_score)
+        plot_confusion_matrix(predicted_values, truth_values, title=f"(Accuracy:{ac_score})")
 
 
 if __name__ == "__main__":
