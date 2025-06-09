@@ -78,7 +78,7 @@ def feature_extraction(path_list, pca: PCA = None, cache_file="cached_audio.pkl"
         else:
             raise ValueError("Cache invalid due to csv file update.")
     except Exception:
-        load_data = lambda path: librosa.load(f"../{path}")[0]
+        load_data = lambda path: librosa.load(f"../{path}")[0]  # noqa: E731
         data = list(map(load_data, path_list))
         # キャッシュ保存
         dict_pd = {"path": path_list, "mtime": mtime, "data": data}
@@ -242,7 +242,7 @@ def main():
         test["path"].values, pca=pca, cache_file="test_audio.pkl"
     )
     print(
-        f"complete feature_extraction in {t_train + t_test:.5g}, number of features is {X_trainset.shape[1]}"
+        f"complete feature_extraction in {t_train + t_test:.5g}, number of features is {X_trainset.shape[1]}"  # noqa: E501
     )
 
     # 正解ラベルをone-hotベクトルに変換 ex. 3 -> [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
