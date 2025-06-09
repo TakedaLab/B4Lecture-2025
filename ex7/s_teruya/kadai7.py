@@ -33,13 +33,13 @@ from sklearn.model_selection import train_test_split
 
 def my_MLP(input_shape, output_dim):
     """MLPモデルの構築.
+
     Args:
         input_shape: 入力の形
         output_dim: 出力次元
     Returns:
         model: 定義済みモデル
     """
-
     model = Sequential()
 
     model.add(Dense(256, input_dim=input_shape))
@@ -61,13 +61,13 @@ def my_MLP(input_shape, output_dim):
 
 def feature_extraction(path_list, pca: PCA = None, cache_file="cached_audio.pkl"):
     """wavファイルのリストから特徴抽出を行い，リストで返す.
+
     扱う特徴量はMFCC13次元の平均（0次は含めない）
     Args:
         path_list: 特徴抽出するファイルのパスリスト
     Returns:
         features: 特徴量
     """
-
     mtime = {p: os.path.getmtime(f"../{p}") for p in path_list}
     print("loading data...")
     try:  # データに変更がなければキャッシュから読み込み
@@ -156,6 +156,7 @@ def feature_extraction(path_list, pca: PCA = None, cache_file="cached_audio.pkl"
 
 def plot_confusion_matrix(predict, ground_truth, title=None, cmap=plt.cm.Blues):
     """予測結果の混合行列をプロット.
+
     Args:
         predict: 予測結果
         ground_truth: 正解ラベル
@@ -164,7 +165,6 @@ def plot_confusion_matrix(predict, ground_truth, title=None, cmap=plt.cm.Blues):
     Returns:
         Nothing
     """
-
     cm = confusion_matrix(predict, ground_truth)
     plt.figure()
     plt.imshow(cm, interpolation="nearest", cmap=cmap)
@@ -194,13 +194,13 @@ def plot_confusion_matrix(predict, ground_truth, title=None, cmap=plt.cm.Blues):
 
 def write_result(paths, outputs):
     """結果をcsvファイルで保存する.
+
     Args:
         paths: テストする音声ファイルリスト
         outputs:
     Returns:
         Nothing
     """
-
     with open("result.csv", "w") as f:
         f.write("path,output\n")
         assert len(paths) == len(outputs)
