@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# https://qiita.com/yutalfa/items/dbd172138db60d461a56
-# https://qiita.com/koshian2/items/ca99b4a489d164e9cec6
-# https://zenn.dev/kthrlab_blog/articles/4e69b7d87a2538
-# https://zenn.dev/totopironote/articles/aa17833ef00e5f
-# https://dev.classmethod.jp/articles/python-assignment-expressions-study/
 
 """
 B4輪講最終課題 パターン認識に挑戦してみよう
@@ -29,6 +24,7 @@ from keras.layers.core import Dense, Dropout, Activation
 from keras.models import Sequential
 from keras.optimizers import SGD
 from keras.utils import np_utils
+import scipy.stats as st
 from sklearn.decomposition import PCA
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
@@ -323,9 +319,14 @@ def main():
                 score_list.append(ac_score)
     if repeat >= 2:
         time_end = time.time()
+        score_mean = np.mean(score_list)
+        conf_area = (
+            st.t.ppf(0.975, df=len(score_list) - 1)
+            * np.std(score_list, ddof=1)
+            / np.sqrt(len(score_list))
+        )
         print(f"Pattern Recognition finished in {time_end - time_start:.5g}")
-        print(f"average accuracy: {np.mean(score_list)}")
-        print(f"standard deviation: {np.std(score_list)}")
+        print(f"Accuracy Score(95%): {score_mean}±{conf_area}")
 
 
 if __name__ == "__main__":
