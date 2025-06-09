@@ -1,39 +1,39 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
+"""kadai7.py.
+
 B4輪講最終課題 パターン認識に挑戦してみよう
-ベースラインスクリプト
-特徴量；MFCCの平均（0次項含まず）
-識別器；MLP
+- 単一数字（0～9）発話データセットの識別
+- 実行コマンド
+ venv起動後`$ python kadai7.py --path_to_truth test_truth.csv -r (繰り返し数)`
+
 """
 
-from __future__ import division
-from __future__ import print_function
+from __future__ import division, print_function
 
 import argparse
 import os
+import pickle
 import time
 
 import librosa
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pickle
-from keras.layers.core import Dense, Dropout, Activation
+import scipy.stats as st
+from keras.layers.core import Activation, Dense, Dropout
 from keras.models import Sequential
 from keras.optimizers import SGD
 from keras.utils import np_utils
-import scipy.stats as st
 from sklearn.decomposition import PCA
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.model_selection import train_test_split
 
 
 def my_MLP(input_shape, output_dim):
-    """
-    MLPモデルの構築
+    """MLPモデルの構築.
+
     Args:
         input_shape: 入力の形
         output_dim: 出力次元
@@ -61,8 +61,8 @@ def my_MLP(input_shape, output_dim):
 
 
 def feature_extraction(path_list, pca: PCA = None, cache_file="cached_audio.pkl"):
-    """
-    wavファイルのリストから特徴抽出を行い，リストで返す
+    """wavファイルのリストから特徴抽出を行い，リストで返す.
+
     扱う特徴量はMFCC13次元の平均（0次は含めない）
     Args:
         path_list: 特徴抽出するファイルのパスリスト
@@ -157,8 +157,8 @@ def feature_extraction(path_list, pca: PCA = None, cache_file="cached_audio.pkl"
 
 
 def plot_confusion_matrix(predict, ground_truth, title=None, cmap=plt.cm.Blues):
-    """
-    予測結果の混合行列をプロット
+    """予測結果の混合行列をプロット.
+
     Args:
         predict: 予測結果
         ground_truth: 正解ラベル
@@ -196,8 +196,8 @@ def plot_confusion_matrix(predict, ground_truth, title=None, cmap=plt.cm.Blues):
 
 
 def write_result(paths, outputs):
-    """
-    結果をcsvファイルで保存する
+    """結果をcsvファイルで保存する.
+
     Args:
         paths: テストする音声ファイルリスト
         outputs:
@@ -213,6 +213,7 @@ def write_result(paths, outputs):
 
 
 def main():
+    """main."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--path_to_truth", type=str, help="テストデータの正解ファイルCSVのパス"
