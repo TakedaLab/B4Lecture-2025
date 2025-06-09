@@ -33,7 +33,6 @@ from sklearn.model_selection import train_test_split
 
 def my_MLP(input_shape, output_dim):
     """MLPモデルの構築.
-
     Args:
         input_shape: 入力の形
         output_dim: 出力次元
@@ -62,7 +61,6 @@ def my_MLP(input_shape, output_dim):
 
 def feature_extraction(path_list, pca: PCA = None, cache_file="cached_audio.pkl"):
     """wavファイルのリストから特徴抽出を行い，リストで返す.
-
     扱う特徴量はMFCC13次元の平均（0次は含めない）
     Args:
         path_list: 特徴抽出するファイルのパスリスト
@@ -158,7 +156,6 @@ def feature_extraction(path_list, pca: PCA = None, cache_file="cached_audio.pkl"
 
 def plot_confusion_matrix(predict, ground_truth, title=None, cmap=plt.cm.Blues):
     """予測結果の混合行列をプロット.
-
     Args:
         predict: 予測結果
         ground_truth: 正解ラベル
@@ -197,7 +194,6 @@ def plot_confusion_matrix(predict, ground_truth, title=None, cmap=plt.cm.Blues):
 
 def write_result(paths, outputs):
     """結果をcsvファイルで保存する.
-
     Args:
         paths: テストする音声ファイルリスト
         outputs:
@@ -213,7 +209,7 @@ def write_result(paths, outputs):
 
 
 def main():
-    """main."""
+    """メイン."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--path_to_truth", type=str, help="テストデータの正解ファイルCSVのパス"
