@@ -241,8 +241,9 @@ def main():
     X_test, _, t_test = feature_extraction(
         test["path"].values, pca=pca, cache_file="test_audio.pkl"
     )
+    X_feature = X_trainset.shape[1]
     print(
-        f"complete feature_extraction in {t_train + t_test:.5g}, number of features is {X_trainset.shape[1]}"  # noqa: E501
+        f"complete feature_extraction in {t_train + t_test:.5g}, number of features is {X_feature}"
     )
 
     # 正解ラベルをone-hotベクトルに変換 ex. 3 -> [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
