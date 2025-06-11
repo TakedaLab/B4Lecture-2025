@@ -32,7 +32,7 @@ from torch.utils.data import Dataset, random_split
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-class my_MLP(pl.LightningModule):
+class my_CNN(pl.LightningModule):
     def __init__(self, input_channels, output_dim):
         super().__init__()
         self.model = self.create_model(input_channels, output_dim)
@@ -52,13 +52,13 @@ class my_MLP(pl.LightningModule):
             model: 定義済みモデル
         """
         model = torch.nn.Sequential(
-            torch.nn.Conv2d(input_channels, 64, kernel_size=3, padding=1),  # 64x128x128
-            torch.nn.ReLU(),
-            torch.nn.MaxPool2d(2, 2),  # 64x64x64
-            torch.nn.Conv2d(64, 64, kernel_size=3, padding=1),  # 64x64x64
+            torch.nn.Conv2d(input_channels, 64, kernel_size=3, padding=1),  # 64x64x64
             torch.nn.ReLU(),
             torch.nn.MaxPool2d(2, 2),  # 64x32x32
-            torch.nn.Flatten(),  # 65536
+            torch.nn.Conv2d(64, 64, kernel_size=3, padding=1),  # 64x32x32
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(2, 2),  # 64x16x16
+            torch.nn.Flatten(),  # 16384
             torch.nn.Linear(64 * 16 * 16, 1024),
             torch.nn.ReLU(),
             torch.nn.Linear(1024, output_dim),
@@ -133,7 +133,7 @@ class FSDD(Dataset):
     def feature_extraction(self, path_list):
         """
         wavファイルのリストから特徴抽出を行いリストで返す
-        扱う特徴量はMFCC13次元の平均（0次は含めない）
+        扱う特徴量はMFCC13を64x64画像として捉えたもの
         Args:
             root: dataset が存在するディレクトリ
             path_list: 特徴抽出するファイルのパスリスト
@@ -145,7 +145,7 @@ class FSDD(Dataset):
         datasize = len(path_list)
         features = torch.zeros(datasize, 1, n_mfcc, n_time)
         transform = torchaudio.transforms.MFCC(
-            n_mfcc=32, melkwargs={"n_mels": 64, "n_fft": 512}
+            n_mfcc=64, melkwargs={"n_mels": 64, "n_fft": 512}
         )
         for i, path in enumerate(path_list):
             # data.shape==(channel,time)
@@ -203,7 +203,7 @@ def main():
     )
 
     # モデルの構築
-    model = my_MLP(input_channels=train_dataset[0][0].shape[0], output_dim=10)
+    model = my_CNN(input_channels=train_dataset[0][0].shape[0], output_dim=10)
 
     # 学習の設定
     trainer = pl.Trainer(max_epochs=50, gpus=0)
