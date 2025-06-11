@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-B4輪講最終課題 パターン認識に挑戦してみよう
+"""B4輪講最終課題 パターン認識に挑戦してみよう.
+
 ベースラインスクリプト(Pytorch Lightning版)
 特徴量；MFCC
 識別器；RNN
@@ -15,7 +15,7 @@ LightningModule
 Trainer
     Docs: https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html
     API Refference: https://pytorch-lightning.readthedocs.io/en/stable/api/pytorch_lightning.trainer.trainer.Trainer.html
-"""
+"""  # noqa: E501
 
 import argparse
 import os
@@ -33,7 +33,24 @@ root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class my_RNN(pl.LightningModule):
+    """RNNモデルの定義.
+
+    Attributes:
+        loss_fn: 損失関数
+        train_acc: 学習時の精度
+        val_acc: 検証時の精度
+        test_acc: テスト時の精度
+        confm: 混同行列
+    """
+
     def __init__(self, input_dim, hidden_dim, output_dim):
+        """RNNモデルの初期化.
+
+        Args:
+            input_channels: 入力チャネル数
+            hidden_dim: 中間の形
+            output_dim: 出力次元
+        """
         super().__init__()
         self.create_model(input_dim, hidden_dim, output_dim)
 
@@ -44,15 +61,13 @@ class my_RNN(pl.LightningModule):
         self.confm = torchmetrics.ConfusionMatrix(10, normalize="true")
 
     def create_model(self, input_dim, hidden_dim, output_dim, num_layers=1):
-        """
-        RNNモデルの構築
+        """RNNモデルの構築.
+
         Args:
             input_dim: 入力の形
             hidden_dim: 中間の形
             output_dim: 出力次元
             num_layers: 層の数
-        Returns:
-            model: 定義済みモデル
         """
         self.rnn = torch.nn.RNN(
             input_size=input_dim,
@@ -68,11 +83,27 @@ class my_RNN(pl.LightningModule):
         print(model)
 
     def forward(self, x):
+        """モデルの順伝播.
+
+        Args:
+            x: 入力データ
+        Returns:
+            出力データ
+        """
         output, _ = self.rnn(x, None)
         output = self.fc(output[:, -1, :])
         return output
 
     def training_step(self, batch, batch_idx, dataloader_id=None):
+        """学習ステップ.
+
+        Args:
+            batch: 入力データとラベルのバッチ
+            batch_idx: バッチのインデックス
+            dataloader_id: データローダーのID（オプション）
+        Returns:
+            loss: 計算された損失
+        """
         x, y = batch
         pred = self.forward(x)
         loss = self.loss_fn(pred, y)
@@ -95,6 +126,15 @@ class my_RNN(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx, dataloader_id=None):
+        """検証ステップ.
+
+        Args:
+            batch: 入力データとラベルのバッチ
+            batch_idx: バッチのインデックス
+            dataloader_id: データローダーのID（オプション）
+        Returns:
+            loss: 計算された損失
+        """
         x, y = batch
         pred = self.forward(x)
         loss = self.loss_fn(pred, y)
@@ -102,6 +142,15 @@ class my_RNN(pl.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx, dataloader_id=None):
+        """テストステップ.
+
+        Args:
+            batch: 入力データとラベルのバッチ
+            batch_idx: バッチのインデックス
+            dataloader_id: データローダーのID（オプション）
+        Returns:
+            dict: 予測とターゲットの辞書
+        """
         x, y = batch
         pred = self.forward(x)
         loss = self.loss_fn(pred, y)
@@ -109,6 +158,11 @@ class my_RNN(pl.LightningModule):
         return {"pred": torch.argmax(pred, dim=-1), "target": y}
 
     def test_epoch_end(self, outputs) -> None:
+        """テストエポック終了時の処理.
+
+        Args:
+            outputs: 各バッチの出力
+        """
         # 混同行列を tensorboard に出力
         preds = torch.cat([tmp["pred"] for tmp in outputs])
         targets = torch.cat([tmp["target"] for tmp in outputs])
@@ -122,21 +176,40 @@ class my_RNN(pl.LightningModule):
         self.logger.experiment.add_figure("Confusion matrix", fig_, self.current_epoch)
 
     def configure_optimizers(self):
+        """オプティマイザの設定.
+
+        Returns:
+            optimizer: Adamオプティマイザ
+        """
         self.optimizer = torch.optim.SGD(self.parameters(), lr=0.002)
         return self.optimizer
 
 
 class FSDD(Dataset):
+    """FSDDデータセットの定義.
+
+    Attributes:
+        features: 特徴量
+        label: 各ファイルのラベル
+    """
+
     def __init__(self, path_list, label) -> None:
+        """FSDDデータセットの初期化.
+
+        Args:
+            path_list: 特徴抽出するファイルのパスリスト
+            label: 各ファイルのラベル
+        """
         super().__init__()
         self.features = self.feature_extraction(path_list)
         self.label = label
 
     def feature_extraction(self, path_list):
-        """
-        wavファイルのリストから特徴抽出を行いリストで返す
+        """wavファイルのリストから特徴抽出を行いリストで返す.
+
         扱う特徴量はMFCC13次元の系列データ
         n_timeより短ければ0パディングして、長ければ後ろを削る
+
         Args:
             root: dataset が存在するディレクトリ
             path_list: 特徴抽出するファイルのパスリスト
@@ -170,6 +243,10 @@ class FSDD(Dataset):
 
 
 def main():
+    """メイン関数.
+
+    コマンドライン引数で指定されたパスから正解データを読み込み、学習・検証・テストを行う。
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--path_to_truth", type=str, help="テストデータの正解ファイルCSVのパス"
