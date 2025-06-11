@@ -153,7 +153,7 @@ class my_RNN(pl.LightningModule):
         """
         x, y = batch
         pred = self.forward(x)
-        loss = self.loss_fn(pred, y)
+        # loss = self.loss_fn(pred, y)
         self.log("test/acc", self.test_acc(pred, y), prog_bar=True, logger=True)
         return {"pred": torch.argmax(pred, dim=-1), "target": y}
 
@@ -236,9 +236,21 @@ class FSDD(Dataset):
         return features
 
     def __len__(self):
+        """データセットの長さを返す.
+
+        Returns:
+            int: データセットの長さ
+        """
         return self.features.shape[0]
 
     def __getitem__(self, index):
+        """指定されたインデックスのデータを返す.
+
+        Args:
+            index: データのインデックス
+        Returns:
+            tuple: 特徴量とラベルのタプル
+        """
         return self.features[index], self.label[index]
 
 
