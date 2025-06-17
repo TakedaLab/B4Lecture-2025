@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "vanilla-vae"
+version = "0.1.0"
+description = ""
+authors = ["Rikuhei-ynwa <umemoto.rikuhei@g.sp.m.is.nagoya-u.ac.jp>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.11.9"
+numpy = "1.25.0"
+matplotlib = "3.7.1"
+torch = "2.0.1"
+torchvision = "0.15.2"
+torchaudio = "2.0.2"
+fire = "0.5.0"
+
+
+[tool.poetry.group.dev.dependencies]
+isort = "^5.13.2"
+black = "^24.4.2"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
