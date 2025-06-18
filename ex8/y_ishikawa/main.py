@@ -59,7 +59,12 @@ class Main:
         self.dataloader_train = None
         self.dataloader_valid = None
         self.dataloader_test = None
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if torch.backends.mps.is_available():
+            self.device = torch.device("mps")
+        elif torch.cuda.is_available():
+            self.device = torch.device("cuda")
+        else:
+            self.device = torch.device("cpu")
         self.model = VAE(self.z_dim, self.h_dim, self.drop_rate).to(self.device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         self.num_no_improved = 0
