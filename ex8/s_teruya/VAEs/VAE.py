@@ -69,5 +69,5 @@ class VAE(nn.Module):
         y=self.decoder(z)
         
         KL=torch.sum(1+enc_logvar-enc_mean**2-torch.exp(enc_logvar))/2  # https://qiita.com/gensal/items/613d04b5ff50b6413aa0
-        reconstruction=self.rec_method(y, x) # https://qiita.com/PingpongChopper/items/d7db77516c52b9bb15c6
+        reconstruction=-self.rec_method(y, x)   # https://qiita.com/PingpongChopper/items/d7db77516c52b9bb15c6
         return [KL, reconstruction], z, y
