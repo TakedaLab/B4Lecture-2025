@@ -82,6 +82,7 @@ class VAE(nn.Module):
 
     def decoder(self, z: torch.Tensor) -> torch.Tensor:
         """Decode the latent variable z to reconstruct the input data.
+
         Parameters
         ----------
         z : torch.Tensor
@@ -102,6 +103,7 @@ class VAE(nn.Module):
         self, x: torch.Tensor, device: torch.device
     ) -> tuple[list, torch.Tensor, torch.Tensor]:
         """Return KL divergence, reconstruction loss, latent variable, and output data.
+
         Parameters
         ----------
         x : torch.Tensor
