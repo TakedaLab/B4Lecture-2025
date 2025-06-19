@@ -46,7 +46,7 @@ class VAE(nn.Module):
         Parameters
         ----------
         x : torch.Tensor
-            Input data, shape (batch_size, MNIST_SIZE, MNIST_SIZE).
+            Input data, shape (batch_size, MNIST_SIZE * MNIST_SIZE).
 
         Returns
         -------
@@ -105,7 +105,7 @@ class VAE(nn.Module):
         Parameters
         ----------
         x : torch.Tensor
-            Input data, shape (batch_size, MNIST_SIZE, MNIST_SIZE).
+            Input data, shape (batch_size, MNIST_SIZE * MNIST_SIZE).
         device : torch.device
             Device to run the model on, either "mps" (Apple Silicon), "cuda" (NVIDIA GPU), or "cpu".
 
