@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from matplotlib.animation import ArtistAnimation
+from sklearn.decomposition import PCA
 
 
 class Visualize:
@@ -33,6 +34,7 @@ class Visualize:
         self.dataloader_test = dataloader_test
         self.model = model
         self.device = device
+        self.pca = PCA(n_components=2)
 
     def createDirectories(self):
         """Create directories for storing images."""
@@ -65,7 +67,7 @@ class Visualize:
             fig_plot, ax_plot = plt.subplots(figsize=(9, 9))
             fig_scatter, ax_scatter = plt.subplots(figsize=(9, 9))
             _, z, _ = self.model(data[0], self.device)
-            z = z.cpu().detach().numpy()
+            z = self.pca.fit_transform(z.cpu().detach().numpy())
             for k in range(10):
                 cluster_indexes = np.where(data[1].cpu().detach().numpy() == k)[0]
                 ax_plot.plot(
@@ -93,11 +95,9 @@ class Visualize:
         x = np.linspace(-2, 2, num_image)
         y = np.linspace(-2, 2, num_image)
         z_x, z_y = np.meshgrid(x, y)
-        Z = (
-            torch.tensor(np.array([z_x, z_y]), dtype=torch.float)
-            .permute(1, 2, 0)
-            .to(self.device)
-            .reshape(-1, self.z_dim)
+        Z = np.hstack([z_x, z_y]).reshape(-1, 2)
+        Z = torch.tensor(self.pca.inverse_transform(Z), dtype=torch.float).to(
+            self.device
         )
         y = self.model.decoder(Z).cpu().detach().numpy().reshape(-1, 28, 28)
         fig, axes = plt.subplots(num_image, num_image, figsize=(9, 9))
@@ -129,14 +129,18 @@ class Visualize:
         # Store latent variables which are linearly changed from a start point to goal point
         for z1, z2 in zip(z1_list, z2_list):
             z1_to_z2_list.append(
-                torch.cat(
-                    [
-                        ((z1 * ((self.step - i) / self.step)) + (z2 * (i / self.step)))
-                        for i in range(self.step)
-                    ]
-                )
-                .reshape(self.step, self.z_dim)
-                .to(self.device)
+                torch.tensor(
+                    self.pca.inverse_transform(
+                        [
+                            (
+                                (z1 * ((self.step - i) / self.step))
+                                + (z2 * (i / self.step))
+                            )
+                            for i in range(self.step)
+                        ]
+                    ),
+                    dtype=torch.float,
+                ).to(self.device)
             )
         # Store the output of each latent variable from the decoder
         for z1_to_z2 in z1_to_z2_list:
