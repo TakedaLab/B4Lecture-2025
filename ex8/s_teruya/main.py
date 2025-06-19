@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """This file is for you to implement the main function."""
 
+import random
 import os
 
 import fire
@@ -24,6 +25,7 @@ class Main:
         num_max_epochs: int = 1000,
         do_train: bool = True,
         train_size_rate: float = 0.8,
+        seed: int = None,
     ):
         """
         Set constructors.
@@ -46,6 +48,8 @@ class Main:
             Whether to train the model, by default True.
         train_size_rate : float, optional
             The ratio of the training data to the validation data, by default 0.8.
+        seed : int, optional
+            Random seed, by default None.
         """
         self.z_dim = z_dim
         self.h_dim = h_dim
@@ -70,6 +74,13 @@ class Main:
         self.Visualize = Visualize(
             self.z_dim, self.h_dim, self.dataloader_test, self.model, self.device
         )
+
+        if seed is not None:    # https://qiita.com/north_redwing/items/1e153139125d37829d2d
+            random.seed(seed)
+            np.random.seed(seed)
+            torch.manual_seed(seed)
+            torch.backends.cudnn.benchmark = False
+            torch.backends.cudnn.deterministic = True
 
     def createDirectories(self):
         """Create directories for logs and parameters."""
