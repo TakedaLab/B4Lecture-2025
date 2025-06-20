@@ -38,36 +38,36 @@ class VAE(nn.Module):
         self.dec_fc2 = nn.Linear(int(self.h_dim / 2), self.h_dim)
         self.dec_drop = nn.Dropout(self.drop_rate)
         self.dec_fc3 = nn.Linear(self.h_dim, self.x_dim)
-        self.relu=nn.ReLU()
-        self.rec_method=nn.BCELoss(reduction="sum")
+        self.relu = nn.ReLU()
+        self.rec_method = nn.BCELoss(reduction="sum")
 
     def encoder(self, x):
         """# ToDo: Implement the encoder."""
-        x=x.reshape((-1,self.x_dim))    # https://qiita.com/kenta1984/items/d68b72214ce92beebbe2
-        x=self.relu(self.enc_fc1(x))
-        x=self.relu(self.enc_fc2(x))
+        x = x.reshape((-1, self.x_dim))
+        x = self.relu(self.enc_fc1(x))
+        x = self.relu(self.enc_fc2(x))
         return self.enc_fc3_mean(x), self.enc_fc3_logvar(x)
 
     def sample_z(self, enc_mean, enc_logvar, device):
         """# ToDo: Implement a function to sample latent variables."""
-        enc_std=torch.exp(enc_logvar / 2)   # https://qiita.com/nabenabe0928/items/342fb7829abe31d1bd49
-        ns=torch.randn(enc_std.shape).to(device)    # https://tech.aru-zakki.com/python-random/
-        return enc_mean+ns*enc_std
+        enc_std = torch.exp(enc_logvar / 2)
+        ns = torch.randn(enc_std.shape).to(device)
+        return enc_mean + ns * enc_std
 
     def decoder(self, z):
         """# ToDo: Implement the decoder."""
-        z=self.relu(self.dec_fc1(z))
-        z=self.relu(self.dec_fc2(z))
-        z=self.dec_drop(z)
+        z = self.relu(self.dec_fc1(z))
+        z = self.relu(self.dec_fc2(z))
+        z = self.dec_drop(z)
         return torch.sigmoid(self.dec_fc3(z))
 
     def forward(self, x, device):
         """# ToDo: Implement the forward function to return the following variables."""
         x = x.to(device)
-        enc_mean, enc_logvar=self.encoder(x)
-        z=self.sample_z(enc_mean, enc_logvar, device)
-        y=self.decoder(z)
-        
-        KL=torch.sum(1+enc_logvar-enc_mean**2-torch.exp(enc_logvar))/2  # https://qiita.com/gensal/items/613d04b5ff50b6413aa0
-        reconstruction=-self.rec_method(y, x)   # https://qiita.com/PingpongChopper/items/d7db77516c52b9bb15c6
+        enc_mean, enc_logvar = self.encoder(x)
+        z = self.sample_z(enc_mean, enc_logvar, device)
+        y = self.decoder(z)
+
+        KL = torch.sum(1 + enc_logvar - enc_mean**2 - torch.exp(enc_logvar)) / 2
+        reconstruction = -self.rec_method(y, x)
         return [KL, reconstruction], z, y

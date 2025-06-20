@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """This file is for you to implement the main function."""
 
-import random
 import os
+import random
 
 import fire
 import numpy as np
@@ -61,7 +61,8 @@ class Main:
         self.batch_size = 625
         self.generator = None
 
-        if seed is not None:    # https://qiita.com/north_redwing/items/1e153139125d37829d2d
+        # random seed
+        if seed is not None:
             random.seed(seed)
             np.random.seed(seed)
             torch.manual_seed(seed)
@@ -79,8 +80,8 @@ class Main:
         self.num_no_improved = 0
         self.num_batch_train = 0
         self.num_batch_valid = 0
-        self.loss_valid = 10**7  # Initialize with a large value
-        self.loss_valid_min = 10**7  # Initialize with a large value
+        self.loss_valid = 10**7
+        self.loss_valid_min = 10**7
         self.Visualize = Visualize(
             self.z_dim, self.h_dim, self.dataloader_test, self.model, self.device
         )
@@ -112,13 +113,22 @@ class Main:
 
         # Create dataloaders from the datasets
         self.dataloader_train = torch.utils.data.DataLoader(
-            dataset_train, batch_size=self.batch_size, shuffle=True, generator=self.generator
+            dataset_train,
+            batch_size=self.batch_size,
+            shuffle=True,
+            generator=self.generator,
         )
         self.dataloader_valid = torch.utils.data.DataLoader(
-            dataset_valid, batch_size=self.batch_size, shuffle=False, generator=self.generator
+            dataset_valid,
+            batch_size=self.batch_size,
+            shuffle=False,
+            generator=self.generator,
         )
         self.dataloader_test = torch.utils.data.DataLoader(
-            dataset_test, batch_size=self.batch_size, shuffle=False, generator=self.generator
+            dataset_test,
+            batch_size=self.batch_size,
+            shuffle=False,
+            generator=self.generator,
         )
         self.Visualize.dataloader_test = self.dataloader_test
 
@@ -126,7 +136,7 @@ class Main:
         """Do batch-based learning for training data."""
         self.model.train()
         for x, _ in self.dataloader_train:
-            lower_bound, _, _ = self.model(x, self.device)  # https://free.kikagaku.ai/tutorial/basic_of_deep_learning/learn/pytorch_basic
+            lower_bound, _, _ = self.model(x, self.device)
             loss = -sum(lower_bound)
             self.model.zero_grad()
             loss.backward()
