@@ -80,8 +80,8 @@ class Main:
         self.num_no_improved = 0
         self.num_batch_train = 0
         self.num_batch_valid = 0
-        self.loss_valid = 10**7
-        self.loss_valid_min = 10**7
+        self.loss_valid = 10**7  # Initialize with a large value
+        self.loss_valid_min = 10**7  # Initialize with a large value
         self.Visualize = Visualize(
             self.z_dim, self.h_dim, self.dataloader_test, self.model, self.device
         )
