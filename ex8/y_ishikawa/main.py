@@ -2,10 +2,12 @@
 """This file is for you to implement the main function."""
 
 import os
+import random
 
 import fire
 import numpy as np
 import torch
+import torch.backends
 from libs.Visualize import Visualize
 from torch import optim
 from torchvision import datasets, transforms
@@ -24,6 +26,7 @@ class Main:
         num_max_epochs: int = 1000,
         do_train: bool = True,
         train_size_rate: float = 0.8,
+        seed: int = 42,
     ):
         """
         Set constructors.
@@ -46,6 +49,8 @@ class Main:
             Whether to train the model, by default True.
         train_size_rate : float, optional
             The ratio of the training data to the validation data, by default 0.8.
+        seed : int, optional
+            Random seed for reproducibility, by default 42.
         """
         self.z_dim = z_dim
         self.h_dim = h_dim
@@ -55,6 +60,10 @@ class Main:
         self.do_train = do_train
         self.train_size_rate = train_size_rate
         self.batch_size = 625
+
+        # Set random seed
+        self.seed = seed
+        self.set_random_seed()
 
         self.dataloader_train = None
         self.dataloader_valid = None
@@ -152,6 +161,14 @@ class Main:
                 self.model.state_dict(),
                 f"./params/model_z_{self.z_dim}_h_{self.h_dim}.pth",
             )
+
+    def set_random_seed(self):
+        """Set random seed for reproducibility."""
+        random.seed(self.seed)
+        np.random.seed(self.seed)
+        torch.manual_seed(self.seed)
+        torch.cuda.manual_seed_all(self.seed)
+        torch.mps.manual_seed(self.seed)
 
     def main(self):
         """Output the results of training and visualization."""
