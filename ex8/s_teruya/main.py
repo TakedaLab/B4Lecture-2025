@@ -59,6 +59,16 @@ class Main:
         self.do_train = do_train
         self.train_size_rate = train_size_rate
         self.batch_size = 625
+        self.generator = None
+
+        if seed is not None:    # https://qiita.com/north_redwing/items/1e153139125d37829d2d
+            random.seed(seed)
+            np.random.seed(seed)
+            torch.manual_seed(seed)
+            torch.backends.cudnn.benchmark = False
+            torch.backends.cudnn.deterministic = True
+            self.generator = torch.Generator()
+            self.generator.manual_seed(seed)
 
         self.dataloader_train = None
         self.dataloader_valid = None
@@ -74,13 +84,6 @@ class Main:
         self.Visualize = Visualize(
             self.z_dim, self.h_dim, self.dataloader_test, self.model, self.device
         )
-
-        if seed is not None:    # https://qiita.com/north_redwing/items/1e153139125d37829d2d
-            random.seed(seed)
-            np.random.seed(seed)
-            torch.manual_seed(seed)
-            torch.backends.cudnn.benchmark = False
-            torch.backends.cudnn.deterministic = True
 
     def createDirectories(self):
         """Create directories for logs and parameters."""
@@ -104,18 +107,18 @@ class Main:
         size_train = int(size_train_valid * self.train_size_rate)
         size_valid = size_train_valid - size_train
         dataset_train, dataset_valid = torch.utils.data.random_split(
-            dataset_train_valid, [size_train, size_valid]
+            dataset_train_valid, [size_train, size_valid], generator=self.generator
         )
 
         # Create dataloaders from the datasets
         self.dataloader_train = torch.utils.data.DataLoader(
-            dataset_train, batch_size=self.batch_size, shuffle=True
+            dataset_train, batch_size=self.batch_size, shuffle=True, generator=self.generator
         )
         self.dataloader_valid = torch.utils.data.DataLoader(
-            dataset_valid, batch_size=self.batch_size, shuffle=False
+            dataset_valid, batch_size=self.batch_size, shuffle=False, generator=self.generator
         )
         self.dataloader_test = torch.utils.data.DataLoader(
-            dataset_test, batch_size=self.batch_size, shuffle=False
+            dataset_test, batch_size=self.batch_size, shuffle=False, generator=self.generator
         )
         self.Visualize.dataloader_test = self.dataloader_test
 
