@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """This file is for you to implement the main function."""
 
-import random
 import os
+import random
 
 import fire
 import numpy as np
@@ -10,10 +10,10 @@ import torch
 import torch.backends
 import torch.backends.cuda
 import torch.backends.cudnn
+from i_tzimas.VAE import VAE
 from libs.Visualize import Visualize
 from torch import optim
 from torchvision import datasets, transforms
-from i_tzimas.VAE import VAE
 
 
 class Main:
@@ -171,7 +171,6 @@ class Main:
 
     def main(self):
         """Output the results of training and visualization."""
-
         # Data loading
         self.createDirectories()
         self.createDataLoader()
