@@ -1,0 +1,7 @@
+.venv
+資料/
+bootstrap.sh
+train_audio.pkl
+test_audio.pkl
+test_truth.csv
+venv_usage.txt
