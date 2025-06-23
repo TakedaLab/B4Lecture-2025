@@ -1,0 +1,30 @@
+TO RUN THE CODE main.py NEEDS TO BE PLACED IN ex8/ , Visualize.py IN libs/ AND IMPORT FROM i_tzimas/VAE
+
+Increase reproducibility:
+- Set constant seeds for RNGs in python, numpy, torch, cuda
+
+Before:
+`python main.py main --h_dim 800` :
+- Run 1 loss_valid_min: 83965
+- Run 2 loss_valid_min: 84172
+
+After4:
+`python main.py main --h_dim 600 --drop_rate 0.4 --seed 727`
+- Run 1 loss_valid_min: 84387
+- Run 2 loss_valid_min: 84387
+- Run 3 loss_valid_min: 84387
+
+Tinkering:
+
+- Baseline:
+    - with z_dim=10: 61652 loss
+    - with z_dim=10 and seed=727: 60681 loss
+    - with z_dim=15: 60260 loss
+    - with z_dim=15 and seed=727: 59963 loss
+    - with z_dim=15 and h_dim=800: 59028 loss
+    - with z_dim=15 and h_dim=800 and seed=727: 58792 loss
+
+- +1 Linear layer: 
+    - with h_dim=800: 81204 loss
+- +2 Linear layers:
+    - with h_dim=800: 80736 loss
