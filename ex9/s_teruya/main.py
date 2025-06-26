@@ -1,14 +1,17 @@
 """Train the diffusion model for image denoising."""
 
 import logging
+import os
 from typing import Any, Dict
 
 import diffusers
 import hydra
+import matplotlib.pyplot as plt
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 from datasets import load_dataset
+from matplotlib.animation import ArtistAnimation
 from omegaconf import DictConfig
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader
@@ -149,7 +152,7 @@ class DiffusionModel(pl.LightningModule):
         """Generate images at the end of each epoch."""
         if self.current_epoch % self.every_n_epochs == self.every_n_epochs - 1:
             logging.info("Generating Images...")
-            generated_image = self.generate(
+            generated_image= self.generate(
                 self.num_timesteps,
                 (self.num_samples[0] * self.num_samples[1],) + self.image_size,
             )
@@ -167,6 +170,32 @@ class DiffusionModel(pl.LightningModule):
                 dataformats="HW" if generated_image.ndim == 2 else "CHW",
             )
             logging.info("Done.")
+    
+    def on_train_end(self):
+        """Generate gifs at the end of train."""
+        print("generating gifs...")
+        x = torch.randn((self.num_samples[0] * self.num_samples[1],) + self.image_size).to(self.device)
+        image_list=[(x.cpu().detach().numpy()+1)/2]
+        for t in range(self.num_timesteps - 1, -1, -1):
+            t = torch.full((x.size(0),), t, dtype=torch.long, device=self.device)
+            x = self.p_sample(x, t)
+            image_list.append((x.cpu().detach().numpy()+1)/2)
+        os.makedirs(f"./{self.logger.log_dir}/gifs", exist_ok=True)
+        for n in range(image_list[0].shape[0]):
+            fig, ax = plt.subplots(1, 1, figsize=(9, 9))
+            fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            images = []
+            for _, im in enumerate(image_list):
+                images.append([ax.imshow(im[n].transpose(1, 2, 0), vmin=0, vmax=1)])
+            animation = ArtistAnimation(
+                fig, images, interval=50, blit=True, repeat_delay=1000
+            )
+            animation.save(
+                f"./{self.logger.log_dir}/gifs/generate_{n}.gif", writer="pillow"
+            )
+            plt.close(fig)
 
 
 @hydra.main(config_path="conf", config_name="default.yaml", version_base=None)
