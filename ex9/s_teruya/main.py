@@ -152,7 +152,7 @@ class DiffusionModel(pl.LightningModule):
         """Generate images at the end of each epoch."""
         if self.current_epoch % self.every_n_epochs == self.every_n_epochs - 1:
             logging.info("Generating Images...")
-            generated_image= self.generate(
+            generated_image = self.generate(
                 self.num_timesteps,
                 (self.num_samples[0] * self.num_samples[1],) + self.image_size,
             )
@@ -170,16 +170,18 @@ class DiffusionModel(pl.LightningModule):
                 dataformats="HW" if generated_image.ndim == 2 else "CHW",
             )
             logging.info("Done.")
-    
+
     def on_train_end(self):
         """Generate gifs at the end of train."""
         print("generating gifs...")
-        x = torch.randn((self.num_samples[0] * self.num_samples[1],) + self.image_size).to(self.device)
-        image_list=[(x.cpu().detach().numpy()+1)/2]
+        x = torch.randn(
+            (self.num_samples[0] * self.num_samples[1],) + self.image_size
+        ).to(self.device)
+        image_list = [((x + 1) / 2).cpu().detach().numpy()]
         for t in range(self.num_timesteps - 1, -1, -1):
             t = torch.full((x.size(0),), t, dtype=torch.long, device=self.device)
             x = self.p_sample(x, t)
-            image_list.append((x.cpu().detach().numpy()+1)/2)
+            image_list.append(((x + 1) / 2).cpu().detach().numpy())
         os.makedirs(f"./{self.logger.log_dir}/gifs", exist_ok=True)
         for n in range(image_list[0].shape[0]):
             fig, ax = plt.subplots(1, 1, figsize=(9, 9))
@@ -188,10 +190,11 @@ class DiffusionModel(pl.LightningModule):
             ax.set_yticks([])
             images = []
             for _, im in enumerate(image_list):
+                # https://qiita.com/hirowatari-s/items/e51cf26d093fbefa5598
                 images.append([ax.imshow(im[n].transpose(1, 2, 0), vmin=0, vmax=1)])
             animation = ArtistAnimation(
                 fig, images, interval=50, blit=True, repeat_delay=1000
-            )
+            )  # https://qiita.com/kumamupooh/items/5273b0b98a4b6ee976fc
             animation.save(
                 f"./{self.logger.log_dir}/gifs/generate_{n}.gif", writer="pillow"
             )
