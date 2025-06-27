@@ -1,3 +1,7 @@
+# https://tech.jxpress.net/entry/2021/11/17/112214
+# https://qiita.com/hirowatari-s/items/e51cf26d093fbefa5598
+# https://qiita.com/kumamupooh/items/5273b0b98a4b6ee976fc
+# https://www.geeksforgeeks.org/deep-learning/how-to-avoid-cuda-out-of-memory-in-pytorch/
 """Train the diffusion model for image denoising."""
 
 import logging
@@ -105,17 +109,18 @@ class DiffusionModel(pl.LightningModule):
         Returns:
             torch.Tensor: Denoised image x_t (B, C, H, W)
         """
-        noise = self.forward(x, t)
-        beta_t = self.beta[t].view(-1, 1, 1, 1)
-        alpha_t = self.alpha[t].view(-1, 1, 1, 1)
-        alpha_prod_t = self.alpha_prod[t].view(-1, 1, 1, 1)
+        with torch.no_grad():
+            noise = self.forward(x, t)
+            beta_t = self.beta[t].view(-1, 1, 1, 1)
+            alpha_t = self.alpha[t].view(-1, 1, 1, 1)
+            alpha_prod_t = self.alpha_prod[t].view(-1, 1, 1, 1)
 
-        x_t = (x - noise * (1 - alpha_t) / torch.sqrt(1 - alpha_prod_t)) / torch.sqrt(
-            alpha_t
-        )
-        if t[0] > 0:
-            x_t += torch.sqrt(beta_t) * torch.randn_like(x)
-        return x_t
+            x_t = (
+                x - noise * (1 - alpha_t) / torch.sqrt(1 - alpha_prod_t)
+            ) / torch.sqrt(alpha_t)
+            if t[0] > 0:
+                x_t += torch.sqrt(beta_t) * torch.randn_like(x)
+            return x_t
 
     def training_step(self, batch, batch_idx):
         """Training 1 step.
@@ -130,13 +135,12 @@ class DiffusionModel(pl.LightningModule):
         images = batch["images"]
         images = images.to(self.device)
 
-        t = torch.randint(0, self.num_timesteps, images.shape[0], device=self.device)
+        t = torch.randint(0, self.num_timesteps, (images.shape[0],), device=self.device)
         noise = torch.randn_like(images)
         noisy_images = self.q_sample(images, t, noise)
 
         pred_noise = self.forward(noisy_images, t)
         loss = self.criterion(noise, pred_noise)
-        # https://tech.jxpress.net/entry/2021/11/17/112214
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
 
         return loss
@@ -182,9 +186,10 @@ class DiffusionModel(pl.LightningModule):
         for t in range(self.num_timesteps - 1, -1, -1):
             t = torch.full((x.size(0),), t, dtype=torch.long, device=self.device)
             x = self.p_sample(x, t)
-            image_list.append(((x + 1) / 2).cpu().detach().numpy())
+            if t % 10 == 0:
+                image_list.append(((x + 1) / 2).cpu().detach().numpy())
         try:
-            os.makedirs(f"./{self.logger.log_dir}/gifs", exist_ok=True)
+            os.makedirs(f"{self.logger.log_dir}/gifs", exist_ok=True)
             for n in range(image_list[0].shape[0]):
                 fig, ax = plt.subplots(1, 1, figsize=(9, 9))
                 fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
@@ -192,13 +197,12 @@ class DiffusionModel(pl.LightningModule):
                 ax.set_yticks([])
                 images = []
                 for _, im in enumerate(image_list):
-                    # https://qiita.com/hirowatari-s/items/e51cf26d093fbefa5598
                     images.append([ax.imshow(im[n].transpose(1, 2, 0), vmin=0, vmax=1)])
                 animation = ArtistAnimation(
-                    fig, images, interval=50, blit=True, repeat_delay=1000
-                )  # https://qiita.com/kumamupooh/items/5273b0b98a4b6ee976fc
+                    fig, images, interval=100, blit=True, repeat_delay=1000
+                )
                 animation.save(
-                    f"./{self.logger.log_dir}/gifs/generate_{n}.gif", writer="pillow"
+                    f"{self.logger.log_dir}/gifs/generate_{n}.gif", writer="pillow"
                 )
                 plt.close(fig)
         except Exception:
