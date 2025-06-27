@@ -182,12 +182,14 @@ class DiffusionModel(pl.LightningModule):
         x = torch.randn(
             (self.num_samples[0] * self.num_samples[1],) + self.image_size
         ).to(self.device)
-        image_list = [((x + 1) / 2).cpu().detach().numpy()]
+        image_list = [torch.clamp((x + 1) / 2, 0.0, 1.0).cpu().detach().numpy()]
         for t in range(self.num_timesteps - 1, -1, -1):
             t = torch.full((x.size(0),), t, dtype=torch.long, device=self.device)
             x = self.p_sample(x, t)
             if t % 10 == 0:
-                image_list.append(((x + 1) / 2).cpu().detach().numpy())
+                image_list.append(
+                    torch.clamp((x + 1) / 2, 0.0, 1.0).cpu().detach().numpy()
+                )
         try:
             os.makedirs(f"{self.logger.log_dir}/gifs", exist_ok=True)
             for n in range(image_list[0].shape[0]):
