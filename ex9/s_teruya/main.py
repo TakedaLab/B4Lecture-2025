@@ -2,6 +2,7 @@
 
 import logging
 import os
+import traceback
 from typing import Any, Dict
 
 import diffusers
@@ -182,23 +183,27 @@ class DiffusionModel(pl.LightningModule):
             t = torch.full((x.size(0),), t, dtype=torch.long, device=self.device)
             x = self.p_sample(x, t)
             image_list.append(((x + 1) / 2).cpu().detach().numpy())
-        os.makedirs(f"./{self.logger.log_dir}/gifs", exist_ok=True)
-        for n in range(image_list[0].shape[0]):
-            fig, ax = plt.subplots(1, 1, figsize=(9, 9))
-            fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
-            ax.set_xticks([])
-            ax.set_yticks([])
-            images = []
-            for _, im in enumerate(image_list):
-                # https://qiita.com/hirowatari-s/items/e51cf26d093fbefa5598
-                images.append([ax.imshow(im[n].transpose(1, 2, 0), vmin=0, vmax=1)])
-            animation = ArtistAnimation(
-                fig, images, interval=50, blit=True, repeat_delay=1000
-            )  # https://qiita.com/kumamupooh/items/5273b0b98a4b6ee976fc
-            animation.save(
-                f"./{self.logger.log_dir}/gifs/generate_{n}.gif", writer="pillow"
-            )
-            plt.close(fig)
+        try:
+            os.makedirs(f"./{self.logger.log_dir}/gifs", exist_ok=True)
+            for n in range(image_list[0].shape[0]):
+                fig, ax = plt.subplots(1, 1, figsize=(9, 9))
+                fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
+                ax.set_xticks([])
+                ax.set_yticks([])
+                images = []
+                for _, im in enumerate(image_list):
+                    # https://qiita.com/hirowatari-s/items/e51cf26d093fbefa5598
+                    images.append([ax.imshow(im[n].transpose(1, 2, 0), vmin=0, vmax=1)])
+                animation = ArtistAnimation(
+                    fig, images, interval=50, blit=True, repeat_delay=1000
+                )  # https://qiita.com/kumamupooh/items/5273b0b98a4b6ee976fc
+                animation.save(
+                    f"./{self.logger.log_dir}/gifs/generate_{n}.gif", writer="pillow"
+                )
+                plt.close(fig)
+        except Exception:
+            print("Warning!: Failed to generate gifs.")
+            traceback.print_exc()
 
 
 @hydra.main(config_path="conf", config_name="default.yaml", version_base=None)
