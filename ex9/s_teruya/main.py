@@ -1,7 +1,3 @@
-# https://tech.jxpress.net/entry/2021/11/17/112214
-# https://qiita.com/hirowatari-s/items/e51cf26d093fbefa5598
-# https://qiita.com/kumamupooh/items/5273b0b98a4b6ee976fc
-# https://www.geeksforgeeks.org/deep-learning/how-to-avoid-cuda-out-of-memory-in-pytorch/
 """Train the diffusion model for image denoising."""
 
 import logging
@@ -179,9 +175,7 @@ class DiffusionModel(pl.LightningModule):
     def on_train_end(self):
         """Generate gifs at the end of train."""
         print("generating gifs...")
-        x = torch.randn(
-            (self.num_samples[0] * self.num_samples[1],) + self.image_size
-        ).to(self.device)
+        x = torch.randn((4,) + self.image_size).to(self.device)
         image_list = [torch.clamp((x + 1) / 2, 0.0, 1.0).cpu().detach().numpy()]
         for t in range(self.num_timesteps - 1, -1, -1):
             t = torch.full((x.size(0),), t, dtype=torch.long, device=self.device)
