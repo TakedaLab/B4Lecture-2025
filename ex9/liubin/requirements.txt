@@ -1,0 +1,10 @@
+torch
+torchvision
+pytorch-lightning
+matplotlib
+diffusers
+hydra-core
+omegaconf
+tensorboard
+datasets
+imageio
