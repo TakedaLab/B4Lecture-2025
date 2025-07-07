@@ -41,16 +41,16 @@ class DiffusionModel(pl.LightningModule):
     """Diffusion model for image denoising."""
 
     def __init__(
-            self,
-            model: torch.nn.Module,  # Noise prediction model
-            criterion: torch.nn.Module,  # Loss function
-            optimizer: torch.optim.Optimizer,  # Optimizer
-            num_timesteps: int,  # Time steps of the diffusion
-            noise_schedule: str,  # Noise scheduler type
-            noise_schedule_kwargs: Dict[str, Any],  # Arguments for noise scheduler
-            num_samples: tuple,  # Number of samples for visualization
-            image_size: tuple,  # Image size
-            every_n_epochs: int,  # Visualization interval
+        self,
+        model: torch.nn.Module,  # Noise prediction model
+        criterion: torch.nn.Module,  # Loss function
+        optimizer: torch.optim.Optimizer,  # Optimizer
+        num_timesteps: int,  # Time steps of the diffusion
+        noise_schedule: str,  # Noise scheduler type
+        noise_schedule_kwargs: Dict[str, Any],  # Arguments for noise scheduler
+        num_samples: tuple,  # Number of samples for visualization
+        image_size: tuple,  # Image size
+        every_n_epochs: int,  # Visualization interval
     ) -> None:
         """Initialize the diffusion model."""
         super(DiffusionModel, self).__init__()
@@ -74,14 +74,22 @@ class DiffusionModel(pl.LightningModule):
 
     def configure_optimizers(self):
         """Configure optimizer."""
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.optimizer.defaults['lr'])
+        optimizer = torch.optim.Adam(
+            self.model.parameters(), lr=self.optimizer.defaults["lr"]
+        )
 
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer,
             T_max=self.trainer.estimated_stepping_batches,
         )
 
-        return {"optimizer": optimizer, "lr_scheduler": {"scheduler": scheduler, "interval": "step", }}
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "interval": "step",
+            },
+        }
 
     def forward(self, x: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
         """Forward noise prediction model.
@@ -96,7 +104,7 @@ class DiffusionModel(pl.LightningModule):
         return self.model(x, t).sample
 
     def q_sample(
-            self, x0: torch.Tensor, t: torch.Tensor, noise: torch.Tensor = None
+        self, x0: torch.Tensor, t: torch.Tensor, noise: torch.Tensor = None
     ) -> torch.Tensor:
         """Forward process of the diffusion model. x_t ~ q(x_t|x_0).
 
@@ -128,8 +136,8 @@ class DiffusionModel(pl.LightningModule):
             alpha_t = self.alpha[t].view(-1, 1, 1, 1)
             alpha_prod_t = self.alpha_prod[t].view(-1, 1, 1, 1)
             x = (
-                        x - noise_pred * (1 - alpha_t) / (1 - alpha_prod_t).sqrt()
-                ) / alpha_t.sqrt()
+                x - noise_pred * (1 - alpha_t) / (1 - alpha_prod_t).sqrt()
+            ) / alpha_t.sqrt()
             if t[0].item() != 0:
                 x = x + torch.randn_like(x) * (1 - alpha_t).sqrt()
             return x
@@ -147,10 +155,7 @@ class DiffusionModel(pl.LightningModule):
         images = batch["images"].to(self.device)
 
         t = torch.randint(
-            0,
-            self.hparams.num_timesteps,
-            (images.size(0),),
-            device=self.device
+            0, self.hparams.num_timesteps, (images.size(0),), device=self.device
         ).long()
 
         noise = torch.randn_like(images)
@@ -172,17 +177,21 @@ class DiffusionModel(pl.LightningModule):
 
     def on_train_epoch_end(self):
         """Generate images at the end of each epoch."""
-        if self.current_epoch % self.hparams.every_n_epochs == self.hparams.every_n_epochs - 1:
+        if (
+            self.current_epoch % self.hparams.every_n_epochs
+            == self.hparams.every_n_epochs - 1
+        ):
             logging.info(f"Generating images at epoch {self.current_epoch}...")
 
-            shape = (self.hparams.num_samples[0] * self.hparams.num_samples[1],) + tuple(self.hparams.image_size)
-            generated_image = self.generate(
-                self.hparams.num_timesteps,
-                shape
-            )
+            shape = (
+                self.hparams.num_samples[0] * self.hparams.num_samples[1],
+            ) + tuple(self.hparams.image_size)
+            generated_image = self.generate(self.hparams.num_timesteps, shape)
             generated_image = (generated_image + 1) / 2
             grid_image = (
-                generated_image.reshape(tuple(self.hparams.num_samples) + tuple(self.hparams.image_size))
+                generated_image.reshape(
+                    tuple(self.hparams.num_samples) + tuple(self.hparams.image_size)
+                )
                 .permute([2, 0, 3, 1, 4])
                 .flatten(-4, -3)
                 .flatten(-2, -1)
@@ -193,7 +202,7 @@ class DiffusionModel(pl.LightningModule):
                 self.current_epoch,
             )
 
-            grid_image_np = (grid_image.clamp(0, 1).cpu().numpy() * 255).astype('uint8')
+            grid_image_np = (grid_image.clamp(0, 1).cpu().numpy() * 255).astype("uint8")
             if grid_image_np.shape[0] == 1:
                 self.epoch_images.append(grid_image_np.squeeze(0))
             else:
@@ -219,17 +228,24 @@ class DiffusionModel(pl.LightningModule):
         diffusion_process_images = []
         shape = (1,) + tuple(self.hparams.image_size)
         x = torch.randn(shape, device=self.device)
-        for t in tqdm(range(self.hparams.num_timesteps - 1, -1, -1), desc="Generating diffusion process GIF"):
+        for t in tqdm(
+            range(self.hparams.num_timesteps - 1, -1, -1),
+            desc="Generating diffusion process GIF",
+        ):
             if t % 50 == 0:
                 img_t = (x + 1) / 2
-                img_np = (img_t.clamp(0, 1).squeeze(0).cpu().numpy() * 255).astype('uint8')
+                img_np = (img_t.clamp(0, 1).squeeze(0).cpu().numpy() * 255).astype(
+                    "uint8"
+                )
                 diffusion_process_images.append(img_np.transpose(1, 2, 0))
 
             t_tensor = torch.full((x.size(0),), t, dtype=torch.long, device=self.device)
             x = self.p_sample(x, t_tensor)
 
         img_final = (x + 1) / 2
-        img_np_final = (img_final.clamp(0, 1).squeeze(0).cpu().numpy() * 255).astype('uint8')
+        img_np_final = (img_final.clamp(0, 1).squeeze(0).cpu().numpy() * 255).astype(
+            "uint8"
+        )
         diffusion_process_images.append(img_np_final.transpose(1, 2, 0))
         gif_path_diffusion = os.path.join(output_dir, "diffusion_process.gif")
         imageio.mimsave(gif_path_diffusion, diffusion_process_images, fps=10)
@@ -241,7 +257,7 @@ def main(cfg: DictConfig) -> None:
     torch.manual_seed(cfg.seed)
     torch.cuda.manual_seed(cfg.seed)
 
-    torch.set_float32_matmul_precision('medium')
+    torch.set_float32_matmul_precision("medium")
 
     outdir = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
 
