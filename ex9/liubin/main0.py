@@ -1,3 +1,5 @@
+"""Diffusion model training script."""
+
 import logging
 import os
 from typing import Any, Dict
@@ -17,7 +19,15 @@ from tqdm import tqdm
 
 
 class ImageTransform:
+    """Transforms images for the dataset."""
+
     def __init__(self, image_size, to_rgb: bool = True):
+        """Initialize the image transform.
+
+        Args:
+            image_size (tuple): The target image size.
+            to_rgb (bool, optional): Whether to convert images to RGB. Defaults to True.
+        """
         self.to_rgb = to_rgb
         self.transform = transforms.Compose(
             [
@@ -28,6 +38,14 @@ class ImageTransform:
         )
 
     def __call__(self, examples):
+        """Apply the transform to a batch of examples.
+
+        Args:
+            examples (dict): A dictionary of examples, with an "image" key.
+
+        Returns:
+            dict: A dictionary with the transformed images under the "images" key.
+        """
         if self.to_rgb:
             images = [
                 self.transform(image.convert("RGB")) for image in examples["image"]
@@ -211,9 +229,10 @@ class DiffusionModel(pl.LightningModule):
             logging.info("Done.")
 
     def on_train_end(self):
-        """
-        PyTorch Lightning hook called at the very end of training.
-        Used here to generate final GIF animations.
+        """Generate GIFs at the end of training.
+
+        This is a PyTorch Lightning hook called at the very end of training,
+        used here to generate final GIF animations.
         """
         logging.info("Training finished. Generating GIFs...")
         output_dir = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
@@ -254,6 +273,7 @@ class DiffusionModel(pl.LightningModule):
 
 @hydra.main(config_path="conf", config_name="default.yaml", version_base=None)
 def main(cfg: DictConfig) -> None:
+    """Train the diffusion model."""
     torch.manual_seed(cfg.seed)
     torch.cuda.manual_seed(cfg.seed)
 
